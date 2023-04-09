@@ -1,0 +1,10 @@
+[package]
+name = "mini-base"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossterm = "0.26.1"
+ratatui = "0.20.1"
+sqlx = { version = "0.6.3", features = [  "runtime-async-std-native-tls", "sqlite" ] }
+async-std = { version = "1", features = [ "attributes" ] }
