@@ -1,34 +1,35 @@
-use ratatui::{backend::CrosstermBackend, Terminal};
-use std::io;
+use cursive::{
+    view::Resizable,
+    views::{Dialog, SelectView, TextArea},
+};
 
-pub use app::AppResult;
+mod style;
 
-mod app;
-mod event;
-mod handler;
-mod tui;
-mod ui;
+pub fn run() {
+    let mut app = cursive::default();
 
-pub fn run() -> AppResult<()> {
-    let mut app = app::App::new();
+    // app.set_theme(style::get_theme());
 
-    let backend = CrosstermBackend::new(io::stderr());
-    let terminal = Terminal::new(backend)?;
-    let events = event::EventHandler::new(250);
-    let mut tui = tui::Tui::new(terminal, events);
-    tui.init()?;
+    app.add_layer(
+        Dialog::new().title("mini base").content(
+            SelectView::new()
+                .item_str("0-18")
+                .item_str("19-30")
+                .item_str("19-30")
+                .item_str("31-40")
+                .item_str("41+")
+                .on_submit(|s, item| {
+                    let content = match item {
+                        "0-18" => "Content number one",
+                        "41+" => "Content number two! Much better!",
+                        _ => unreachable!("no such item"),
+                    };
 
-    while app.running {
-        tui.draw(&mut app)?;
+                    s.pop_layer();
+                    s.add_layer(TextArea::new().full_screen());
+                }),
+        ),
+    );
 
-        match tui.events.next()? {
-            event::Event::Tick => app.tick(),
-            event::Event::Key(key_event) => handler::handle_key_events(key_event, &mut app)?,
-            event::Event::Mouse(_) => {}
-            event::Event::Resize(_, _) => {}
-        }
-    }
-
-    tui.exit()?;
-    Ok(())
+    app.run();
 }
