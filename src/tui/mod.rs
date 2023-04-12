@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{alloc::Layout, collections::HashMap};
 
 use cursive::{
     view::Resizable,
-    views::{Dialog, ScreensView, StackView, TextArea, TextView},
+    views::{Dialog, LinearLayout, OnLayoutView, ScreensView, StackView, TextArea, TextView},
     Cursive, ScreenId,
 };
 
@@ -32,14 +32,25 @@ pub fn run() {
         let items = vec![String::from("lol"), String::from("b2b")];
 
         let on_select = |s: &mut Cursive, idx: &usize| {};
+        let list = components::selector::select_component(items, on_select);
 
-        let list = components::selector::select_component(s, items, on_select);
+        let on_submit = |s: &mut Cursive, idx: &str| {};
+        let search = components::textedit::textedit_component(String::from("search"), on_submit);
 
-        s.add_layer(Dialog::new().title("list").content(list.full_screen()));
+        s.add_layer(
+            Dialog::new()
+                .title("list")
+                .content(
+                    LinearLayout::vertical()
+                        .child(search)
+                        .child(list.full_screen()),
+                )
+                .full_screen(),
+        );
     };
 
     let model = utils::get_current_model(&mut app);
-    let select = components::selector::select_component(&mut app, model.dbtype, on_select);
+    let select = components::selector::select_component(model.dbtype, on_select);
 
     let on_editor = |s: &mut Cursive| {
         let data = utils::get_data_from_refname::<TextArea>(s, "editor");

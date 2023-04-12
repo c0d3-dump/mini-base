@@ -4,7 +4,7 @@ use cursive::{
     Cursive, View,
 };
 
-pub fn select_component<F>(s: &mut Cursive, items: Vec<String>, cb: F) -> impl View
+pub fn select_component<F>(items: Vec<String>, cb: F) -> impl View
 where
     F: Fn(&mut Cursive, &usize) + 'static,
 {
