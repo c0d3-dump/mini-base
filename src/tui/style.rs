@@ -6,7 +6,7 @@ pub fn get_theme() -> Theme {
     theme.shadow = false;
     theme.borders = BorderStyle::Simple;
 
-    let palette = Palette::terminal_default();
+    let palette = Palette::default();
 
     // palette[PaletteColor::Background] = Color::Dark(BaseColor::Black);
 
