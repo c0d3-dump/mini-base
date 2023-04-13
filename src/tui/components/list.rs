@@ -4,9 +4,8 @@ use cursive::{
     Cursive, View,
 };
 
-pub fn list_component<F, V>(items: Vec<(String, V)>, cb: F) -> impl View
+pub fn list_component<V>(items: Vec<(String, V)>) -> impl View
 where
-    F: Fn(&mut Cursive, &String) + 'static,
     V: View + 'static,
 {
     let mut list = ListView::new();
@@ -15,5 +14,5 @@ where
         list.add_child(label, view);
     }
 
-    list.on_select(cb)
+    list
 }
