@@ -21,14 +21,26 @@ async fn main() {
     // tui::run()
 
     let pool = database::sqlite::Sqlite::new().await;
-    let rows = pool
-        .query_all(
-            "DELETE FROM table_name WHERE id>?",
-            vec![ColType::Integer(2)],
-        )
-        .await;
 
-    let out = pool.parse_all(rows);
+    // let exec = pool.execute("DELETE FROM user", vec![]).await;
 
-    println!("{:#?}", out).await;
+    // println!("exec {:?}", exec).await;
+
+    // let exec = pool
+    //     .execute(
+    //         "INSERT INTO user (content) VALUES (?); INSERT INTO user (content) VALUES (?);",
+    //         vec![
+    //             ColType::String("Hello".to_string()),
+    //             ColType::String("Hi".to_string()),
+    //         ],
+    //     )
+    //     .await;
+
+    // println!("exec {:?}", exec).await;
+
+    let rows = pool.get_table_info("user".to_string()).await;
+
+    // let out = pool.parse_all(rows);
+
+    println!("{:#?}", rows).await;
 }

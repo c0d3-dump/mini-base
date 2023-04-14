@@ -5,6 +5,12 @@ pub enum ColType {
     String(String),
 }
 
-// pub trait BaseDatabase {
-//     fn new() -> Self;
-// }
+#[derive(Debug, Clone)]
+pub struct ColInfo {
+    pub cid: i64,
+    pub name: String,
+    pub ctype: String,
+    pub notnull: bool,
+    pub dflt_value: String,
+    pub pk: bool,
+}
