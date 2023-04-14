@@ -137,7 +137,9 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         data.db = db;
 
         // TODO: check if we need to pop layer
-        // s.pop_layer();
+        // found out that if we don't pop layer then on some terminal there will be some flickering when switching between stackview
+        s.pop_layer();
+        s.pop_layer();
         display_dashboard(s);
     };
     let on_test = |s: &mut Cursive| {

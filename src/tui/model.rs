@@ -1,16 +1,42 @@
-use std::fmt;
+use std::{default, fmt};
 
 #[derive(Clone, Debug, Default)]
 pub struct Model {
     pub db: Db,
-    pub list: Vec<List>,
+    pub auth: Auth,
+    pub rolelist: Vec<RoleList>,
+    pub querylist: Vec<QueryList>,
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct List {
-    pub db: Db,
+pub struct RoleList {
     pub label: String,
+    pub approval_required: bool,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct QueryList {
+    pub label: String,
+    pub exec_type: ExecType,
+    pub role_access: Vec<RoleList>,
     pub query: String,
+}
+
+#[derive(Clone, Debug, Default)]
+pub enum ExecType {
+    #[default]
+    QUERY,
+    EXECUTION,
+}
+
+#[derive(Clone, Debug, Default)]
+pub enum Auth {
+    EMAIL {
+        email: String,
+        password: String,
+    },
+    #[default]
+    None,
 }
 
 #[derive(Clone, Debug, Default)]
