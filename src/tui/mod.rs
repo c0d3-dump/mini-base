@@ -7,6 +7,7 @@ use std::thread;
 use async_std::channel;
 use async_std::prelude::FutureExt;
 use cursive::logger;
+use cursive::views::{DebugView, ListChild, ListView};
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
@@ -21,8 +22,10 @@ use tokio::runtime::{Handle, Runtime};
 use crate::database;
 
 use self::model::DbType;
+use self::utils::{get_current_model, get_current_mut_model, get_data_from_refname};
 
 mod components;
+pub mod jsondb;
 mod model;
 mod style;
 mod utils;
@@ -38,9 +41,9 @@ pub fn run() {
 
     // logger::init();
 
-    select_dbtype(&mut app);
+    // select_dbtype(&mut app);
 
-    // display_dashboard(&mut app);
+    display_dashboard(&mut app);
 
     app.run();
 }
@@ -85,7 +88,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         .collect();
 
     let on_submit = move |s: &mut Cursive| {
-        let db = match dbtype {
+        let conn = match dbtype {
             DbType::SQLITE => {
                 let dbpath = utils::get_data_from_refname::<EditView>(s, "dbpath")
                     .get_content()
@@ -94,7 +97,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 async {
                     let conn = database::sqlite::Sqlite::new(&dbpath).await;
 
-                    model::Db::SQLITE { dbpath, conn }
+                    (dbpath, model::Conn::SQLITE(conn))
                 }
             }
             DbType::MYSQL => {
@@ -151,16 +154,11 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
             }
         };
 
-        let (tx, rx) = channel::bounded(1);
+        let mut model: &mut model::Model = s.user_data().unwrap();
 
-        let th = thread::spawn(move || {
-            let handle = Handle::current();
-            handle.spawn(async move { tx.send(db.await).await })
-        });
-
-        th.join().expect("oh no");
-        let mut data: &mut model::Model = s.user_data().unwrap();
-        data.db = rx.recv_blocking().unwrap();
+        let (dbpath, conn) = futures::executor::block_on(conn);
+        model.db = model::Db::SQLITE { dbpath };
+        model.conn = conn;
 
         // TODO: check if we need to pop layer
         // found out that if we don't pop layer then on some terminal there will be some flickering when switching between stackview
@@ -234,10 +232,60 @@ fn stats_dashboard(s: &mut Cursive) -> impl View {
 }
 
 fn auth_dashboard(s: &mut Cursive) -> impl View {
+    let model = get_current_model(s);
+    let mut auth_list_items = vec![];
+
+    for m in model.rolelist {
+        auth_list_items.push(m.label);
+    }
+
+    if auth_list_items.len() > 0 {
+        return Dialog::info(auth_list_items.get(0).unwrap())
+            .full_width()
+            .with_name("temp");
+    }
+
+    let on_select = |s: &mut Cursive, idx: &usize| {};
+
+    let auth_list = components::selector::select_component(auth_list_items, on_select);
+
+    let on_add_role = |s: &mut Cursive| add_role(s);
+
     Dialog::new()
         .title("auth")
+        .content(auth_list)
+        .button("Add Role", on_add_role)
         .full_screen()
         .with_name(model::Sidebar::AUTH.to_string())
+}
+
+fn add_role(s: &mut Cursive) {
+    let on_submit = |s: &mut Cursive| {
+        let data = get_data_from_refname::<EditView>(s, "add_role_text");
+        let model = get_current_mut_model(s);
+
+        model.rolelist.push(model::RoleList {
+            label: data.get_content().to_string(),
+            approval_required: false,
+            role_access: vec![],
+        });
+
+        s.pop_layer();
+    };
+
+    let on_cancel = |s: &mut Cursive| {
+        s.pop_layer();
+    };
+
+    let textedit = EditView::new();
+
+    s.add_layer(
+        Dialog::new()
+            .title("add role")
+            .content(textedit.with_name("add_role_text"))
+            .button("submit", on_submit)
+            .button("cancel", on_cancel),
+    );
 }
 
 fn query_dashboard(s: &mut Cursive) -> impl View {

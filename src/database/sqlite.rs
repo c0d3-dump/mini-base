@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use async_std::fs::File;
 use axum::async_trait;
+use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
     Column, Row, TypeInfo,
@@ -39,13 +40,7 @@ impl Sqlite {
             _ => {}
         }
 
-        let opt_connection = SqlitePoolOptions::new()
-            .min_connections(1)
-            .max_connections(5)
-            .idle_timeout(Some(Duration::from_secs(360)))
-            .max_lifetime(None)
-            .connect(file_path)
-            .await;
+        let opt_connection = SqlitePoolOptions::new().connect(file_path).await;
 
         match opt_connection {
             Ok(connection) => Self {

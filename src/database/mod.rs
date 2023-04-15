@@ -1,2 +1,2 @@
-pub mod sqlite;
 pub mod model;
+pub mod sqlite;

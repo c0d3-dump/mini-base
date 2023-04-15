@@ -1,23 +1,35 @@
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 use crate::database::sqlite::Sqlite;
 
 #[derive(Clone, Debug, Default)]
 pub struct Model {
     pub db: Db,
+    pub conn: Conn,
     pub auth: Auth,
     pub rolelist: Vec<RoleList>,
     pub querylist: Vec<QueryList>,
 }
 
 #[derive(Clone, Debug, Default)]
+pub enum Conn {
+    SQLITE(Sqlite),
+    MYSQL,
+    POSTGRES,
+    #[default]
+    None,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct RoleList {
     pub label: String,
     pub approval_required: bool,
     pub role_access: Vec<RoleAccess>,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum RoleAccess {
     #[default]
     NONE,
@@ -27,7 +39,7 @@ pub enum RoleAccess {
     UPDATE,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct QueryList {
     pub label: String,
     pub exec_type: ExecType,
@@ -35,14 +47,14 @@ pub struct QueryList {
     pub query: String,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum ExecType {
     #[default]
     QUERY,
     EXECUTION,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum Auth {
     EMAIL {
         email: String,
@@ -52,11 +64,10 @@ pub enum Auth {
     None,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum Db {
     SQLITE {
         dbpath: String,
-        conn: Sqlite,
     },
     MYSQL {
         host: String,
