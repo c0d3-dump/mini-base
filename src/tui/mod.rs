@@ -142,9 +142,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         s.pop_layer();
         display_dashboard(s);
     };
-    let on_test = |s: &mut Cursive| {
-        s.add_layer(Dialog::info("testing"));
-    };
     let on_cancel = |s: &mut Cursive| {
         s.pop_layer();
     };
@@ -155,7 +152,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         Dialog::new()
             .title("add database values")
             .content(connection)
-            .button("test", on_test)
             .button("submit", on_submit)
             .button("cancel", on_cancel),
     );

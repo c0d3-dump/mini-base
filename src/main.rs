@@ -38,9 +38,11 @@ async fn main() {
 
     // println!("exec {:?}", exec).await;
 
-    let rows = pool.get_table_info("user".to_string()).await;
+    let rows = pool.query_all("SELECT * FROM user", vec![]).await;
 
-    // let out = pool.parse_all(rows);
+    let out = pool.parse_all(rows);
 
-    println!("{:#?}", rows).await;
+    // let out = pool.get_table_info("user").await;
+
+    println!("{:#?}", out).await;
 }

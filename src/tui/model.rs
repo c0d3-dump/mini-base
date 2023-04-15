@@ -1,4 +1,6 @@
-use std::{default, fmt};
+use std::fmt;
+
+use crate::database::model::ExecType;
 
 #[derive(Clone, Debug, Default)]
 pub struct Model {
@@ -12,6 +14,17 @@ pub struct Model {
 pub struct RoleList {
     pub label: String,
     pub approval_required: bool,
+    pub role_access: Vec<RoleAccess>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub enum RoleAccess {
+    #[default]
+    NONE,
+    READ,
+    CREATE,
+    DELETE,
+    UPDATE,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -20,13 +33,6 @@ pub struct QueryList {
     pub exec_type: ExecType,
     pub role_access: Vec<RoleList>,
     pub query: String,
-}
-
-#[derive(Clone, Debug, Default)]
-pub enum ExecType {
-    #[default]
-    QUERY,
-    EXECUTION,
 }
 
 #[derive(Clone, Debug, Default)]
