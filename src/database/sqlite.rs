@@ -1,3 +1,7 @@
+use std::time::Duration;
+
+use async_std::fs::File;
+use axum::async_trait;
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
     Column, Row, TypeInfo,
@@ -8,14 +12,39 @@ use super::model::{ColInfo, ColType};
 #[derive(Debug, Clone)]
 pub struct Sqlite {
     pub connection: Option<SqlitePool>,
-    pub err: Option<String>,
+    pub err: Option<(String, String)>,
+}
+
+impl Default for Sqlite {
+    fn default() -> Self {
+        Self {
+            connection: None,
+            err: None,
+        }
+    }
 }
 
 impl Sqlite {
-    pub async fn new() -> Self {
+    pub async fn new(file_path: &str) -> Self {
+        match File::open(file_path).await {
+            Err(_) => match File::create(file_path).await {
+                Err(_) => {
+                    return Self {
+                        connection: None,
+                        err: Some(("1".to_string(), "Error creating file".to_string())),
+                    };
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+
         let opt_connection = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect("test.db")
+            .min_connections(1)
+            .max_connections(5)
+            .idle_timeout(Some(Duration::from_secs(360)))
+            .max_lifetime(None)
+            .connect(file_path)
             .await;
 
         match opt_connection {
@@ -23,10 +52,15 @@ impl Sqlite {
                 connection: Some(connection),
                 err: None,
             },
-            Err(err) => Self {
-                connection: None,
-                err: Some(err.as_database_error().unwrap().message().to_string()),
-            },
+            Err(err) => {
+                let code = err.as_database_error().unwrap().code().unwrap().to_string();
+                let msg = err.as_database_error().unwrap().message().to_string();
+
+                Self {
+                    connection: None,
+                    err: Some((code, msg)),
+                }
+            }
         }
     }
 
@@ -37,7 +71,6 @@ impl Sqlite {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
-                _ => panic!("Wrong datatype to bind"),
             };
         }
 
@@ -56,7 +89,6 @@ impl Sqlite {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
-                _ => panic!("Wrong datatype to bind"),
             };
         }
 

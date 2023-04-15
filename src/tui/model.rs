@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::database::model::ExecType;
+use crate::database::sqlite::Sqlite;
 
 #[derive(Clone, Debug, Default)]
 pub struct Model {
@@ -36,6 +36,13 @@ pub struct QueryList {
 }
 
 #[derive(Clone, Debug, Default)]
+pub enum ExecType {
+    #[default]
+    QUERY,
+    EXECUTION,
+}
+
+#[derive(Clone, Debug, Default)]
 pub enum Auth {
     EMAIL {
         email: String,
@@ -49,6 +56,7 @@ pub enum Auth {
 pub enum Db {
     SQLITE {
         dbpath: String,
+        conn: Sqlite,
     },
     MYSQL {
         host: String,

@@ -1,5 +1,12 @@
 use std::{alloc::Layout, collections::HashMap};
 
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
+
+use async_std::channel;
+use async_std::prelude::FutureExt;
+use cursive::logger;
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
@@ -9,6 +16,9 @@ use cursive::{
     },
     Cursive, ScreenId, View,
 };
+use tokio::runtime::{Handle, Runtime};
+
+use crate::database;
 
 use self::model::DbType;
 
@@ -23,6 +33,10 @@ pub fn run() {
     app.set_theme(style::get_theme());
 
     app.set_user_data(model::Model::default());
+
+    // app.show_debug_console();
+
+    // logger::init();
 
     select_dbtype(&mut app);
 
@@ -77,7 +91,11 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                     .get_content()
                     .to_string();
 
-                model::Db::SQLITE { dbpath: dbpath }
+                async {
+                    let conn = database::sqlite::Sqlite::new(&dbpath).await;
+
+                    model::Db::SQLITE { dbpath, conn }
+                }
             }
             DbType::MYSQL => {
                 let host = utils::get_data_from_refname::<EditView>(s, "host")
@@ -96,14 +114,14 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 let database = utils::get_data_from_refname::<EditView>(s, "database")
                     .get_content()
                     .to_string();
-
-                model::Db::MYSQL {
-                    host,
-                    username,
-                    port,
-                    password,
-                    database: Some(database),
-                }
+                panic!();
+                // model::Db::MYSQL {
+                //     host,
+                //     username,
+                //     port,
+                //     password,
+                //     database: Some(database),
+                // }
             }
             DbType::POSTGRES => {
                 let host = utils::get_data_from_refname::<EditView>(s, "host")
@@ -122,19 +140,27 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 let database = utils::get_data_from_refname::<EditView>(s, "database")
                     .get_content()
                     .to_string();
-
-                model::Db::POSTGRES {
-                    host,
-                    username,
-                    port,
-                    password,
-                    database: Some(database),
-                }
+                panic!();
+                // model::Db::POSTGRES {
+                //     host,
+                //     username,
+                //     port,
+                //     password,
+                //     database: Some(database),
+                // }
             }
         };
 
+        let (tx, rx) = channel::bounded(1);
+
+        let th = thread::spawn(move || {
+            let handle = Handle::current();
+            handle.spawn(async move { tx.send(db.await).await })
+        });
+
+        th.join().expect("oh no");
         let mut data: &mut model::Model = s.user_data().unwrap();
-        data.db = db;
+        data.db = rx.recv_blocking().unwrap();
 
         // TODO: check if we need to pop layer
         // found out that if we don't pop layer then on some terminal there will be some flickering when switching between stackview
