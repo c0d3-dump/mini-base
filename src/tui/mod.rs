@@ -326,6 +326,15 @@ fn edit_role(s: &mut Cursive, idx: usize) {
         s.pop_layer();
     };
 
+    let on_delete = move |s: &mut Cursive| {
+        let model = get_current_mut_model(s);
+        model.rolelist.remove(idx);
+
+        update_role_with_model(s);
+
+        s.pop_layer();
+    };
+
     let on_cancel = |s: &mut Cursive| {
         s.pop_layer();
     };
@@ -335,6 +344,7 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             .title("edit role")
             .content(list)
             .button("submit", on_submit)
+            .button("delete", on_delete)
             .button("cancel", on_cancel),
     );
 }
@@ -473,6 +483,15 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         s.pop_layer();
     };
 
+    let on_delete = move |s: &mut Cursive| {
+        let model = get_current_mut_model(s);
+        model.querylist.remove(idx);
+
+        update_query_with_model(s);
+
+        s.pop_layer();
+    };
+
     let on_cancel = |s: &mut Cursive| {
         s.pop_layer();
     };
@@ -482,6 +501,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             .title("edit role")
             .content(list)
             .button("submit", on_submit)
+            .button("delete", on_delete)
             .button("cancel", on_cancel),
     );
 }
