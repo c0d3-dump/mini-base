@@ -29,7 +29,7 @@ pub struct RoleList {
     pub role_access: Vec<RoleAccess>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub enum RoleAccess {
     #[default]
     NONE,
@@ -39,19 +39,40 @@ pub enum RoleAccess {
     UPDATE,
 }
 
+impl fmt::Display for RoleAccess {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RoleAccess::NONE => write!(f, "None"),
+            RoleAccess::READ => write!(f, "Read"),
+            RoleAccess::CREATE => write!(f, "Create"),
+            RoleAccess::DELETE => write!(f, "Delete"),
+            RoleAccess::UPDATE => write!(f, "Update"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct QueryList {
     pub label: String,
     pub exec_type: ExecType,
-    pub role_access: Vec<RoleList>,
+    pub role_access: Vec<String>,
     pub query: String,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub enum ExecType {
     #[default]
     QUERY,
     EXECUTION,
+}
+
+impl fmt::Display for ExecType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ExecType::QUERY => write!(f, "Query"),
+            ExecType::EXECUTION => write!(f, "Execution"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -117,8 +138,9 @@ impl DbType {
 #[derive(Debug, Clone)]
 pub enum Sidebar {
     STATS,
-    AUTH,
+    ROLE,
     QUERY,
+    EDITOR,
     DOCS,
 }
 
@@ -126,8 +148,9 @@ impl fmt::Display for Sidebar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Sidebar::STATS => write!(f, "STATS"),
-            Sidebar::AUTH => write!(f, "AUTH"),
+            Sidebar::ROLE => write!(f, "ROLE"),
             Sidebar::QUERY => write!(f, "QUERY"),
+            Sidebar::EDITOR => write!(f, "EDITOR"),
             Sidebar::DOCS => write!(f, "DOCS"),
         }
     }

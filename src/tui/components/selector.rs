@@ -1,10 +1,13 @@
 use cursive::{
+    utils::span::SpannedString,
     view::Nameable,
     views::{Dialog, SelectView},
     Cursive, View,
 };
 
-pub fn select_component<F>(items: Vec<String>, cb: F) -> impl View
+use crate::tui::model;
+
+pub fn select_component<F>(items: Vec<String>, refname: &str, cb: F) -> impl View
 where
     F: Fn(&mut Cursive, &usize) + 'static,
 {
@@ -14,5 +17,19 @@ where
         selectview.add_item(items.get(i).unwrap(), i);
     }
 
-    selectview.on_submit(cb)
+    selectview.on_submit(cb).with_name(refname)
+}
+
+pub fn add_to_select_component(s: &mut Cursive, refname: &str, item: String, idx: usize) {
+    let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
+    selectview.add_item(item, idx);
+}
+
+pub fn update_select_component(s: &mut Cursive, refname: &str, items: Vec<String>) {
+    let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
+
+    selectview.clear();
+    for i in 0..items.len() {
+        selectview.add_item(items.get(i).unwrap(), i);
+    }
 }

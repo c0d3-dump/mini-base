@@ -4,7 +4,7 @@ use cursive::{
     Cursive, View,
 };
 
-pub fn editor_componant<F>(s: &mut Cursive, refname: String, title: &str, cb: F) -> impl View
+pub fn editor_componant<F>(refname: String, title: &str, cb: F, content: String) -> impl View
 where
     F: Fn(&mut Cursive) + 'static,
 {
@@ -13,7 +13,7 @@ where
     Dialog::new()
         .title(title)
         .padding_lrtb(1, 1, 1, 0)
-        .content(textarea.with_name(refname).full_screen())
+        .content(textarea.content(content).with_name(refname).full_screen())
         .button("SUBMIT", cb)
         .button("CANCEL", |s| {
             s.pop_layer();

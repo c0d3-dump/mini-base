@@ -1,0 +1,37 @@
+{
+    "db": {
+        "SQLITE": {
+            "dbpath": "test.db"
+        }
+    },
+    "auth": "None",
+    "rolelist": [
+        {
+            "label": "user",
+            "approval_required": false,
+            "role_access": [
+                "READ"
+            ]
+        },
+        {
+            "label": "admin",
+            "approval_required": true,
+            "role_access": [
+                "READ",
+                "CREATE",
+                "DELETE",
+                "UPDATE"
+            ]
+        }
+    ],
+    "querylist": [
+        {
+            "label": "test",
+            "exec_type": "QUERY",
+            "role_access": [
+                "user"
+            ],
+            "query": "SELECT * FROM user;"
+        }
+    ]
+}
