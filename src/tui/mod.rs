@@ -1,7 +1,7 @@
 mod components;
 mod jsondb;
 mod layers;
-mod model;
+pub mod model;
 mod style;
 mod utils;
 

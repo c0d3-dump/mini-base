@@ -1,5 +1,3 @@
-use std::thread;
-
 mod database;
 mod parser;
 mod server;

@@ -43,3 +43,8 @@ pub fn update_query_with_model(s: &mut Cursive) {
     components::selector::update_select_component(s, "query_list", query_list_items.clone());
     components::selector::update_select_component(s, "query_editor_list", query_list_items);
 }
+
+pub fn update_model(s: &mut Cursive) {
+    let model = get_current_model(s);
+    jsondb::to_json(model.clone());
+}
