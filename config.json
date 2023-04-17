@@ -4,7 +4,7 @@
             "dbpath": "test.db"
         }
     },
-    "auth": "None",
+    "auth": [],
     "rolelist": [
         {
             "label": "user",
@@ -31,7 +31,7 @@
             "role_access": [
                 "user"
             ],
-            "query": "SELECT * FROM users;"
+            "query": "SELECT * FROM user;"
         }
     ]
 }

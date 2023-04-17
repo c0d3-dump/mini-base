@@ -17,6 +17,7 @@ pub fn display_dashboard(s: &mut Cursive) {
         Sidebar::ROLE.to_string(),
         Sidebar::QUERY.to_string(),
         Sidebar::EDITOR.to_string(),
+        Sidebar::SERVER.to_string(),
     ];
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -26,6 +27,7 @@ pub fn display_dashboard(s: &mut Cursive) {
             Sidebar::ROLE.to_string(),
             Sidebar::QUERY.to_string(),
             Sidebar::EDITOR.to_string(),
+            Sidebar::SERVER.to_string(),
         ];
 
         let layerpos = dashboards
@@ -45,6 +47,7 @@ pub fn display_dashboard(s: &mut Cursive) {
     dashboards.add_fullscreen_layer(editor::editor_dashboard(s));
     dashboards.add_fullscreen_layer(query::query_dashboard(s));
     dashboards.add_fullscreen_layer(role::role_dashboard(s));
+    dashboards.add_fullscreen_layer(server::server_dashboard(s));
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)

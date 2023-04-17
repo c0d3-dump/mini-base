@@ -8,7 +8,7 @@ use crate::database::sqlite::Sqlite;
 pub struct Model {
     pub db: Db,
     pub conn: Conn,
-    pub auth: Auth,
+    pub auth: Vec<Auth>,
     pub rolelist: Vec<RoleList>,
     pub querylist: Vec<QueryList>,
 }
@@ -77,12 +77,10 @@ impl fmt::Display for ExecType {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub enum Auth {
-    EMAIL {
-        email: String,
-        password: String,
-    },
     #[default]
-    None,
+    EMAIL,
+    GOOGLE,
+    GITHUB,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -137,21 +135,23 @@ impl DbType {
 
 #[derive(Debug, Clone)]
 pub enum Sidebar {
-    STATS,
+    AUTH,
     ROLE,
     QUERY,
     EDITOR,
     DOCS,
+    SERVER,
 }
 
 impl fmt::Display for Sidebar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Sidebar::STATS => write!(f, "STATS"),
+            Sidebar::AUTH => write!(f, "AUTH"),
             Sidebar::ROLE => write!(f, "ROLE"),
             Sidebar::QUERY => write!(f, "QUERY"),
             Sidebar::EDITOR => write!(f, "EDITOR"),
             Sidebar::DOCS => write!(f, "DOCS"),
+            Sidebar::SERVER => write!(f, "SERVER"),
         }
     }
 }

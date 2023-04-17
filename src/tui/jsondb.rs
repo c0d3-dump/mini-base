@@ -12,7 +12,7 @@ use super::model::{Auth, Conn, Db, Model, QueryList, RoleList};
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
     pub db: Db,
-    pub auth: Auth,
+    pub auth: Vec<Auth>,
     pub rolelist: Vec<RoleList>,
     pub querylist: Vec<QueryList>,
 }
