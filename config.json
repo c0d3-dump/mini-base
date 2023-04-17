@@ -31,7 +31,7 @@
             "role_access": [
                 "user"
             ],
-            "query": "SELECT * FROM user;"
+            "query": "SELECT * FROM users;"
         }
     ]
 }
