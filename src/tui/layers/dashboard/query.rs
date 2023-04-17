@@ -1,8 +1,8 @@
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
-    views::{Dialog, EditView, LinearLayout, ListView, RadioGroup},
-    Cursive, View, With,
+    views::{Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView},
+    Cursive, With,
 };
 
 use crate::tui::{
@@ -13,7 +13,7 @@ use crate::tui::{
     },
 };
 
-pub fn query_dashboard(s: &mut Cursive) -> impl View {
+pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let model = get_current_model(s);
 
     let query_list_items = model

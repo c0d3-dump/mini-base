@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use cursive::{
     view::{Nameable, Resizable},
-    views::{Dialog, TextArea},
-    Cursive, View,
+    views::{Dialog, TextArea, NamedView, ResizedView},
+    Cursive,
 };
 
 use crate::tui::{
@@ -14,7 +14,7 @@ use crate::tui::{
     },
 };
 
-pub fn editor_dashboard(s: &mut Cursive) -> impl View {
+pub fn editor_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let model = get_current_model(s);
     let query_list_items = model
         .querylist
@@ -37,7 +37,7 @@ pub fn editor_dashboard(s: &mut Cursive) -> impl View {
             s.pop_layer();
         };
 
-        s.add_fullscreen_layer(components::editor::editor_componant(
+        s.add_layer(components::editor::editor_componant(
             "query_editor".to_string(),
             "editor",
             on_submit,
