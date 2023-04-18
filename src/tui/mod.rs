@@ -10,7 +10,7 @@ pub fn run() {
 
     app.set_theme(style::get_theme());
 
-    let model = futures::executor::block_on(jsondb::from_json());
+    let model = jsondb::from_json();
 
     // thread::spawn(|| {
     //     server::start_server();

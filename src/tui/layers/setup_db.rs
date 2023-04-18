@@ -59,11 +59,9 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                     .get_content()
                     .to_string();
 
-                async {
-                    let conn = database::sqlite::Sqlite::new(&dbpath).await;
+                let conn = database::sqlite::Sqlite::new(&dbpath);
 
-                    (dbpath, Conn::SQLITE(conn))
-                }
+                (dbpath, Conn::SQLITE(conn))
             }
             DbType::MYSQL => {
                 let host = utils::get_data_from_refname::<EditView>(s, "host")
@@ -119,7 +117,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
             }
         };
 
-        let (dbpath, conn) = futures::executor::block_on(conn);
+        let (dbpath, conn) = conn;
         s.with_user_data(|m: &mut Model| {
             m.db = Db::SQLITE { dbpath };
             m.conn = conn;

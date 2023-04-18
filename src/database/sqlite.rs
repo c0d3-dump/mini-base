@@ -1,8 +1,5 @@
-use std::time::Duration;
+use std::fs::File;
 
-use async_std::fs::File;
-use axum::async_trait;
-use serde::{Deserialize, Serialize};
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
     Column, Row, TypeInfo,
@@ -26,9 +23,10 @@ impl Default for Sqlite {
 }
 
 impl Sqlite {
+    #[tokio::main]
     pub async fn new(file_path: &str) -> Self {
-        match File::open(file_path).await {
-            Err(_) => match File::create(file_path).await {
+        match File::open(file_path) {
+            Err(_) => match File::create(file_path) {
                 Err(_) => {
                     return Self {
                         connection: None,

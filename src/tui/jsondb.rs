@@ -30,7 +30,7 @@ pub fn to_json(model: Model) {
     file.write(data.as_bytes()).unwrap();
 }
 
-pub async fn from_json() -> Model {
+pub fn from_json() -> Model {
     let optional_data = fs::read_to_string("config.json");
 
     let data = match optional_data {
@@ -50,7 +50,7 @@ pub async fn from_json() -> Model {
 
     let conn = match inter_model.clone().db {
         Db::SQLITE { dbpath } => {
-            let conn = database::sqlite::Sqlite::new(&dbpath).await;
+            let conn = database::sqlite::Sqlite::new(&dbpath);
             Conn::SQLITE(conn)
         }
         Db::MYSQL {
