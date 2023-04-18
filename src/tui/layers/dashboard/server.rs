@@ -23,8 +23,6 @@ use crate::{
 pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let mut layout = LinearLayout::new(Orientation::Vertical);
 
-    let on_restart_pressed = |s: &mut Cursive| {};
-
     let on_start_pressed = |s: &mut Cursive| {
         let t_model = get_current_model(s);
         let model = Arc::new(Mutex::new(t_model.clone()));
@@ -46,14 +44,15 @@ pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 
         match handle_model.clone().handle {
             Some(h) => h.graceful_shutdown(Some(Duration::from_secs(5))),
-            None => (),
+            None => {
+                s.add_layer(Dialog::info("server is not running..."));
+            }
         }
     };
 
     layout.add_child(
         LinearLayout::new(Orientation::Horizontal)
             .child(Button::new("start", on_start_pressed))
-            .child(Button::new("restart", on_restart_pressed))
             .child(Button::new("stop", on_stop_pressed)),
     );
 
