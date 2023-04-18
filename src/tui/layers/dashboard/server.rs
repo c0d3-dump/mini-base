@@ -1,8 +1,13 @@
 use std::{
-    sync::{Arc, Mutex},
+    rc::Rc,
+    sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc, Mutex,
+    },
     thread,
 };
 
+use axum_server::Handle;
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
@@ -12,7 +17,10 @@ use cursive::{
 
 use crate::{
     server,
-    tui::{model::Sidebar, utils::get_current_model},
+    tui::{
+        model::Sidebar,
+        utils::{get_current_model, get_current_mut_model},
+    },
 };
 
 pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
@@ -24,9 +32,18 @@ pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 
     let on_start_pressed = |s: &mut Cursive| {
         let t_model = get_current_model(s);
-        let model = Arc::new(Mutex::new(t_model));
+        let model = Arc::new(Mutex::new(t_model.clone()));
 
-        let t = thread::spawn(move || {
+        // let mut handle_model = get_current_mut_model(s);
+
+        // match t_model.handle {
+        //     None => {
+        //         handle_model.handle = Some(Handle::new());
+        //     }
+        //     Some(_) => todo!(),
+        // }
+
+        thread::spawn(move || {
             let m = model.lock().unwrap();
             server::start_server(m.to_owned());
         });

@@ -84,6 +84,7 @@ pub async fn from_json() -> Model {
             Conn::POSTGRES => todo!(),
             Conn::None => Conn::None,
         },
+        handle: None,
         auth: inter_model.auth,
         rolelist: inter_model.rolelist,
         querylist: inter_model.querylist,

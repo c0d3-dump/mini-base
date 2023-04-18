@@ -1,5 +1,6 @@
 use std::fmt;
 
+use axum_server::Handle;
 use serde::{Deserialize, Serialize};
 
 use crate::database::sqlite::Sqlite;
@@ -11,6 +12,7 @@ pub struct Model {
     pub auth: Vec<Auth>,
     pub rolelist: Vec<RoleList>,
     pub querylist: Vec<QueryList>,
+    pub handle: Option<Handle>,
 }
 
 #[derive(Clone, Debug, Default)]
