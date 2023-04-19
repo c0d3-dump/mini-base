@@ -1,11 +1,14 @@
 use axum::async_trait;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqliteRow, Row};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ColType {
     Integer(Option<i64>),
     String(Option<String>),
+    Bool(Option<bool>),
+    // Array(t),
+    // Object,
 }
 
 #[derive(Debug, Clone)]

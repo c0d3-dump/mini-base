@@ -6,7 +6,7 @@ use axum::{
     Router,
 };
 use axum_server::Handle;
-use serde_json::Value;
+use serde_json::{Number, Value};
 use std::net::SocketAddr;
 
 use crate::{
@@ -73,22 +73,19 @@ async fn handler(
             Ok(json) => {
                 let args = params
                     .into_iter()
-                    .map(|p| ColType::String(Some(json[p].to_string())))
+                    .map(|p| match json[p].clone() {
+                        Value::Null => ColType::String(None),
+                        Value::Bool(t) => ColType::Bool(Some(t)),
+                        Value::Number(t) => ColType::Integer(t.as_i64()),
+                        Value::String(t) => ColType::String(Some(t)),
+                        _ => panic!(),
+                    })
                     .collect::<Vec<ColType>>();
-
-                let t = match args[0].clone() {
-                    ColType::Integer(_) => panic!(),
-                    ColType::String(l) => l.unwrap(),
-                };
-                println!("{}", t);
-                println!("{}", query.clone());
 
                 match dbconn {
                     Conn::SQLITE(c) => {
                         let rows = c.query_all(&query, args).await;
                         let out = c.parse_all(rows);
-
-                        println!("{}", serde_json::to_string(&out).unwrap());
 
                         return (StatusCode::OK, serde_json::to_string(&out).unwrap());
                     }

@@ -64,6 +64,7 @@ impl Sqlite {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
+                ColType::Bool(t) => q.bind(t),
             };
         }
 
@@ -82,6 +83,7 @@ impl Sqlite {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
+                ColType::Bool(t) => q.bind(t),
             };
         }
 
