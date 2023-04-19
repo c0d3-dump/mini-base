@@ -23,8 +23,7 @@ impl Default for Sqlite {
 }
 
 impl Sqlite {
-    #[tokio::main]
-    pub async fn new(file_path: &str) -> Self {
+    pub fn new(file_path: &str) -> Self {
         match File::open(file_path) {
             Err(_) => match File::create(file_path) {
                 Err(_) => {
@@ -38,7 +37,7 @@ impl Sqlite {
             _ => {}
         }
 
-        let opt_connection = SqlitePoolOptions::new().connect(file_path).await;
+        let opt_connection = futures::executor::block_on( SqlitePoolOptions::new().connect(file_path));
 
         match opt_connection {
             Ok(connection) => Self {

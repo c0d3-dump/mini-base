@@ -35,7 +35,7 @@ fn parse_special_character(input: &str) -> IResult<&str, &str> {
     ))(input)
 }
 
-pub fn parse_query(input: &str) -> IResult<&str, Vec<&str>> {
+pub fn parse_query<'a>(input: &'a str) -> IResult<&'a str, Vec<&'a str>> {
     let (input, variables) = many0(alt((
         parse_variable,
         value("", alphanumeric1),
