@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{collections::HashMap, fs::File};
 
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
@@ -126,15 +126,15 @@ impl Sqlite {
         info
     }
 
-    pub fn parse_all(&self, rows: Vec<SqliteRow>) -> Vec<Vec<ColType>> {
+    pub fn parse_all(&self, rows: Vec<SqliteRow>) -> Vec<HashMap<String, ColType>> {
         let mut table_data = vec![];
 
         for row in rows {
-            let mut row_data: Vec<ColType> = vec![];
+            let mut map: HashMap<String, ColType> = HashMap::new();
 
             for i in 0..row.len() {
                 let row_value = match row.column(i).type_info().name() {
-                    "TEXT" => {
+                    "TEXT" | "VARCHAR" => {
                         let t = row.get::<Option<String>, _>(i);
                         ColType::String(t)
                     }
@@ -145,10 +145,10 @@ impl Sqlite {
                     _ => panic!("wrong type found!"),
                 };
 
-                row_data.push(row_value);
+                map.insert(row.column(i).name().to_string(), row_value);
             }
 
-            table_data.push(row_data);
+            table_data.push(map);
         }
 
         table_data

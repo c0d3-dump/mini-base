@@ -1,12 +1,10 @@
 use axum::{
-    handler::Handler,
     http::StatusCode,
-    response::Response,
     routing::{get, post},
     Router,
 };
 use axum_server::Handle;
-use serde_json::{Number, Value};
+use serde_json::Value;
 use std::net::SocketAddr;
 
 use crate::{
@@ -72,13 +70,15 @@ async fn handler(
         let res = match r_json {
             Ok(json) => {
                 let args = params
+                    .clone()
                     .into_iter()
                     .map(|p| match json[p].clone() {
-                        Value::Null => ColType::String(None),
                         Value::Bool(t) => ColType::Bool(Some(t)),
                         Value::Number(t) => ColType::Integer(t.as_i64()),
                         Value::String(t) => ColType::String(Some(t)),
-                        _ => panic!(),
+                        Value::Null => todo!(),
+                        Value::Array(_) => todo!(),
+                        Value::Object(_) => todo!(),
                     })
                     .collect::<Vec<ColType>>();
 
@@ -104,8 +104,6 @@ async fn handler(
         Conn::SQLITE(c) => {
             let rows = c.query_all(&query, vec![]).await;
             let out = c.parse_all(rows);
-
-            // println!("{}", serde_json::to_string(&out).unwrap());
 
             return (StatusCode::OK, serde_json::to_string(&out).unwrap());
         }
