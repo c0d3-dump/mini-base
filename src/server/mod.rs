@@ -16,7 +16,7 @@ use crate::{
 #[tokio::main]
 pub async fn start_server(model: Model, handle: Handle) {
     let app = Router::new()
-        .route("/health", get(|| async { "200: ok" }))
+        .route("/health", get(|| async { "Ok" }))
         .nest("/api", generate_routes(model));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -31,13 +31,20 @@ pub async fn start_server(model: Model, handle: Handle) {
 fn generate_routes(model: Model) -> Router {
     let mut router = Router::new();
 
-    for query in model.querylist {
+    for query in model.clone().querylist {
         let path = format!("/{}", query.label);
 
         let (_, params) = parser::parse_query(&query.query).unwrap();
 
+        let parse_dbtype = match model.db {
+            crate::tui::model::Db::SQLITE { .. } => parser::DbType::SQLITE,
+            crate::tui::model::Db::MYSQL { .. } => parser::DbType::MYSQL,
+            crate::tui::model::Db::POSTGRES { .. } => parser::DbType::POSTGRES,
+            _ => panic!("no db selected"),
+        };
+
         let parsed_query =
-            parser::replace_variables_in_query(parser::DbType::MYSQL, &query.query, params.clone());
+            parser::replace_variables_in_query(parse_dbtype, &query.query, params.clone());
 
         let parsed_params = params
             .into_iter()

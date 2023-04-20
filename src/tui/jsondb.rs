@@ -11,7 +11,6 @@ use super::model::{Auth, Conn, Db, Model, QueryList, RoleList};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
-    pub db: Db,
     pub auth: Vec<Auth>,
     pub rolelist: Vec<RoleList>,
     pub querylist: Vec<QueryList>,
@@ -19,7 +18,6 @@ struct IntermediateModel {
 
 pub fn to_json(model: Model) {
     let inter_model = IntermediateModel {
-        db: model.db,
         auth: model.auth,
         rolelist: model.rolelist,
         querylist: model.querylist,
@@ -48,39 +46,9 @@ pub fn from_json() -> Model {
 
     let inter_model: IntermediateModel = serde_json::from_str(&data).unwrap();
 
-    let conn = match inter_model.clone().db {
-        Db::SQLITE { dbpath } => {
-            let conn = database::sqlite::Sqlite::new(&dbpath);
-            Conn::SQLITE(conn)
-        }
-        Db::MYSQL { dbpath } => {
-            let conn = database::mysql::Mysql::new(&dbpath);
-            Conn::MYSQL(conn)
-        }
-        Db::POSTGRES { dbpath } => todo!(),
-        Db::None => Conn::None,
-    };
-
     Model {
-        db: inter_model.db,
-        conn: match conn {
-            Conn::SQLITE(c) => match c.connection {
-                Some(con) => Conn::SQLITE(Sqlite {
-                    connection: Some(con),
-                    err: None,
-                }),
-                None => Conn::None,
-            },
-            Conn::MYSQL(c) => match c.connection {
-                Some(con) => Conn::MYSQL(Mysql {
-                    connection: Some(con),
-                    err: None,
-                }),
-                None => Conn::None,
-            },
-            Conn::POSTGRES => todo!(),
-            Conn::None => Conn::None,
-        },
+        db: Db::None,
+        conn: Conn::None,
         handle: None,
         auth: inter_model.auth,
         rolelist: inter_model.rolelist,

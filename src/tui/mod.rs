@@ -14,14 +14,7 @@ pub fn run() {
 
     app.set_user_data(model.clone());
 
-    match model.conn {
-        model::Conn::None => {
-            layers::setup_db::select_dbtype(&mut app);
-        }
-        _ => {
-            layers::dashboard::display_dashboard(&mut app);
-        }
-    }
+    layers::setup_db::select_dbtype(&mut app);
 
     app.run();
 }

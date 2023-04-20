@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use cursive::{
     direction::Orientation,
     view::Nameable,
@@ -5,7 +7,11 @@ use cursive::{
     Cursive,
 };
 
-use crate::tui::{components, model::Sidebar, utils};
+use crate::tui::{
+    components,
+    model::Sidebar,
+    utils::{self, get_current_mut_model},
+};
 
 pub mod editor;
 pub mod query;
@@ -23,13 +29,32 @@ pub fn display_dashboard(s: &mut Cursive) {
 
     let on_select = |s: &mut Cursive, idx: &usize| {
         if *idx == 4 {
-            s.quit();
-        }
+            let handle_model = get_current_mut_model(s);
 
-        let mut dashboards = utils::get_data_from_refname::<
-            ScreensView<NamedView<ResizedView<Dialog>>>,
-        >(s, "dashboards");
-        dashboards.set_active_screen(*idx);
+            match handle_model.clone().handle {
+                Some(h) => h.graceful_shutdown(Some(Duration::from_secs(3))),
+                None => {}
+            }
+
+            match handle_model.clone().conn {
+                crate::tui::model::Conn::SQLITE(c) => {
+                    futures::executor::block_on(c.connection.unwrap().close());
+                }
+                crate::tui::model::Conn::MYSQL(c) => {
+                    futures::executor::block_on(c.connection.unwrap().close());
+                }
+                crate::tui::model::Conn::POSTGRES => todo!(),
+                _ => panic!("no database detected!"),
+            }
+
+            s.quit();
+        } else {
+            let mut dashboards = utils::get_data_from_refname::<
+                ScreensView<NamedView<ResizedView<Dialog>>>,
+            >(s, "dashboards");
+
+            dashboards.set_active_screen(*idx);
+        }
     };
 
     let sidebar = Dialog::new().content(components::selector::select_component(
