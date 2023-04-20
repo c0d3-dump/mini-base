@@ -65,6 +65,8 @@ impl Sqlite {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
+                ColType::Array(_) => todo!(),
+                ColType::Object(_) => todo!(),
             };
         }
 
@@ -76,6 +78,17 @@ impl Sqlite {
         q.fetch_all(conn).await.unwrap()
     }
 
+    fn generate_array(arr: Vec<ColType>) {
+        for col in arr {
+            match col {
+                ColType::Integer(_) => todo!(),
+                ColType::String(_) => todo!(),
+                ColType::Bool(_) => todo!(),
+                _ => panic!(),
+            }
+        }
+    }
+
     pub async fn execute(&self, query: &str, args: Vec<ColType>) -> u64 {
         let mut q = sqlx::query(&query);
 
@@ -84,6 +97,8 @@ impl Sqlite {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
+                ColType::Array(_) => todo!(),
+                ColType::Object(_) => todo!(),
             };
         }
 

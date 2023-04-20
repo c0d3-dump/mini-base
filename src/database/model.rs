@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -5,6 +7,8 @@ pub enum ColType {
     Integer(Option<i64>),
     String(Option<String>),
     Bool(Option<bool>),
+    Array(Vec<ColType>),
+    Object(HashMap<String, ColType>),
 }
 
 #[derive(Debug, Clone)]

@@ -10,7 +10,7 @@ use std::net::SocketAddr;
 use crate::{
     database::model::ColType,
     parser,
-    tui::model::{Conn, Model},
+    tui::model::{Conn, ExecType, Model},
 };
 
 #[tokio::main]
@@ -51,7 +51,9 @@ fn generate_routes(model: Model) -> Router {
 
         router = router.route(
             &path,
-            post(move |body: String| handler(body, parsed_query, parsed_params, dbconn)),
+            post(move |body: String| {
+                handler(body, parsed_query, parsed_params, dbconn, query.exec_type)
+            }),
         );
     }
 
@@ -63,6 +65,7 @@ async fn handler(
     query: String,
     params: Vec<String>,
     dbconn: Conn,
+    exectype: ExecType,
 ) -> (StatusCode, String) {
     if params.len() > 0 {
         let r_json: Result<Value, serde_json::Error> = serde_json::from_str(&body);
@@ -76,23 +79,13 @@ async fn handler(
                         Value::Bool(t) => ColType::Bool(Some(t)),
                         Value::Number(t) => ColType::Integer(t.as_i64()),
                         Value::String(t) => ColType::String(Some(t)),
-                        Value::Null => todo!(),
                         Value::Array(_) => todo!(),
                         Value::Object(_) => todo!(),
+                        Value::Null => todo!(),
                     })
                     .collect::<Vec<ColType>>();
 
-                match dbconn {
-                    Conn::SQLITE(c) => {
-                        let rows = c.query_all(&query, args).await;
-                        let out = c.parse_all(rows);
-
-                        return (StatusCode::OK, serde_json::to_string(&out).unwrap());
-                    }
-                    Conn::MYSQL => panic!(),
-                    Conn::POSTGRES => panic!(),
-                    Conn::None => panic!(),
-                }
+                run_query(dbconn, query, exectype, args).await
             }
             Err(_) => (StatusCode::BAD_REQUEST, "insufficient params".to_owned()),
         };
@@ -100,17 +93,31 @@ async fn handler(
         return res;
     }
 
-    match dbconn {
-        Conn::SQLITE(c) => {
-            let rows = c.query_all(&query, vec![]).await;
-            let out = c.parse_all(rows);
+    run_query(dbconn, query, exectype, vec![]).await
+}
 
-            return (StatusCode::OK, serde_json::to_string(&out).unwrap());
-        }
+async fn run_query(
+    dbconn: Conn,
+    query: String,
+    exectype: ExecType,
+    args: Vec<ColType>,
+) -> (StatusCode, std::string::String) {
+    match dbconn {
+        Conn::SQLITE(c) => match exectype {
+            ExecType::QUERY => {
+                let rows = c.query_all(&query, args).await;
+                let out = c.parse_all(rows);
+
+                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
+            }
+            ExecType::EXECUTION => {
+                let out = c.execute(&query, args).await;
+
+                return (StatusCode::OK, out.to_string());
+            }
+        },
         Conn::MYSQL => panic!(),
         Conn::POSTGRES => panic!(),
         Conn::None => panic!(),
     }
-
-    // (StatusCode::BAD_REQUEST, "okay".to_owned())
 }
