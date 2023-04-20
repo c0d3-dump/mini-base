@@ -3,6 +3,7 @@ use std::fmt;
 use axum_server::Handle;
 use serde::{Deserialize, Serialize};
 
+use crate::database::mysql::Mysql;
 use crate::database::sqlite::Sqlite;
 
 #[derive(Clone, Debug, Default)]
@@ -18,7 +19,7 @@ pub struct Model {
 #[derive(Clone, Debug, Default)]
 pub enum Conn {
     SQLITE(Sqlite),
-    MYSQL,
+    MYSQL(Mysql),
     POSTGRES,
     #[default]
     None,
@@ -91,18 +92,10 @@ pub enum Db {
         dbpath: String,
     },
     MYSQL {
-        host: String,
-        username: String,
-        port: u16,
-        password: String,
-        database: Option<String>,
+        dbpath: String,
     },
     POSTGRES {
-        host: String,
-        username: String,
-        port: u16,
-        password: String,
-        database: Option<String>,
+        dbpath: String,
     },
     #[default]
     None,
@@ -121,16 +114,6 @@ impl fmt::Display for DbType {
             DbType::SQLITE => write!(f, "SQLITE"),
             DbType::MYSQL => write!(f, "MYSQL"),
             DbType::POSTGRES => write!(f, "POSTGRES"),
-        }
-    }
-}
-
-impl DbType {
-    pub fn get_items(&self) -> Vec<&str> {
-        match self {
-            DbType::SQLITE => vec!["dbpath"],
-            DbType::MYSQL => vec!["host", "username", "port", "password", "database"],
-            DbType::POSTGRES => vec!["host", "username", "port", "password", "database"],
         }
     }
 }

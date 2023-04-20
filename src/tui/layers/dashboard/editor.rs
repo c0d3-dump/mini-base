@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use cursive::{
     view::{Nameable, Resizable},
-    views::{Dialog, TextArea, NamedView, ResizedView},
+    views::{Dialog, NamedView, ResizedView, TextArea},
     Cursive,
 };
 

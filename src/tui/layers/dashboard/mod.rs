@@ -18,9 +18,14 @@ pub fn display_dashboard(s: &mut Cursive) {
         Sidebar::QUERY.to_string(),
         Sidebar::EDITOR.to_string(),
         Sidebar::SERVER.to_string(),
+        "Quit".to_string(), // 4
     ];
 
     let on_select = |s: &mut Cursive, idx: &usize| {
+        if *idx == 4 {
+            s.quit();
+        }
+
         let mut dashboards = utils::get_data_from_refname::<
             ScreensView<NamedView<ResizedView<Dialog>>>,
         >(s, "dashboards");

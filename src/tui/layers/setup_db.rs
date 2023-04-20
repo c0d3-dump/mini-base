@@ -42,16 +42,6 @@ pub fn select_dbtype(s: &mut Cursive) {
 }
 
 fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
-    let items = dbtype
-        .get_items()
-        .into_iter()
-        .map(|i| {
-            // TODO: prefill content when local storage is setup
-            let v = EditView::new().with_name(i);
-            (i.to_string(), v)
-        })
-        .collect();
-
     let on_submit = move |s: &mut Cursive| {
         let conn = match dbtype {
             DbType::SQLITE => {
@@ -64,30 +54,13 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 (dbpath, Conn::SQLITE(conn))
             }
             DbType::MYSQL => {
-                let host = utils::get_data_from_refname::<EditView>(s, "host")
+                let dbpath = utils::get_data_from_refname::<EditView>(s, "dbpath")
                     .get_content()
                     .to_string();
-                let username = utils::get_data_from_refname::<EditView>(s, "username")
-                    .get_content()
-                    .to_string();
-                let port = utils::get_data_from_refname::<EditView>(s, "port")
-                    .get_content()
-                    .parse::<u16>()
-                    .unwrap();
-                let password = utils::get_data_from_refname::<EditView>(s, "password")
-                    .get_content()
-                    .to_string();
-                let database = utils::get_data_from_refname::<EditView>(s, "database")
-                    .get_content()
-                    .to_string();
-                panic!();
-                // Db::MYSQL {
-                //     host,
-                //     username,
-                //     port,
-                //     password,
-                //     database: Some(database),
-                // }
+
+                let conn = database::mysql::Mysql::new(&dbpath);
+
+                (dbpath, Conn::MYSQL(conn))
             }
             DbType::POSTGRES => {
                 let host = utils::get_data_from_refname::<EditView>(s, "host")
@@ -134,12 +107,12 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         s.pop_layer();
     };
 
-    let connection = components::list::list_component(items);
+    let dbpath_view = EditView::new().with_name("dbpath");
 
     s.add_layer(
         Dialog::new()
             .title("add database values")
-            .content(connection)
+            .content(dbpath_view)
             .button("submit", on_submit)
             .button("cancel", on_cancel),
     );

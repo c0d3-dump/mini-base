@@ -12,10 +12,6 @@ pub fn run() {
 
     let model = jsondb::from_json();
 
-    // thread::spawn(|| {
-    //     server::start_server();
-    // });
-
     app.set_user_data(model.clone());
 
     match model.conn {

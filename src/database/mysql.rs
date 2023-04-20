@@ -1,19 +1,19 @@
-use std::{collections::HashMap, fs::File};
+use std::collections::HashMap;
 
 use sqlx::{
-    sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
+    mysql::{MySqlPool, MySqlPoolOptions, MySqlRow},
     Column, Row, TypeInfo,
 };
 
 use super::model::{ColInfo, ColType};
 
 #[derive(Debug, Clone)]
-pub struct Sqlite {
-    pub connection: Option<SqlitePool>,
+pub struct Mysql {
+    pub connection: Option<MySqlPool>,
     pub err: Option<(String, String)>,
 }
 
-impl Default for Sqlite {
+impl Default for Mysql {
     fn default() -> Self {
         Self {
             connection: None,
@@ -22,23 +22,10 @@ impl Default for Sqlite {
     }
 }
 
-impl Sqlite {
+impl Mysql {
     #[tokio::main]
     pub async fn new(dbpath: &str) -> Self {
-        match File::open(dbpath) {
-            Err(_) => match File::create(dbpath) {
-                Err(_) => {
-                    return Self {
-                        connection: None,
-                        err: Some(("1".to_string(), "Error creating file".to_string())),
-                    };
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-
-        let opt_connection = SqlitePoolOptions::new().connect(dbpath).await;
+        let opt_connection = MySqlPoolOptions::new().connect(dbpath).await;
 
         match opt_connection {
             Ok(connection) => Self {
@@ -57,7 +44,10 @@ impl Sqlite {
         }
     }
 
-    pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Vec<SqliteRow> {
+    pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Vec<MySqlRow> {
+        dbg!(query);
+        dbg!(args.clone());
+
         let mut q = sqlx::query(&query);
 
         for arg in args {
@@ -130,7 +120,7 @@ impl Sqlite {
         info
     }
 
-    pub fn parse_all(&self, rows: Vec<SqliteRow>) -> Vec<HashMap<String, ColType>> {
+    pub fn parse_all(&self, rows: Vec<MySqlRow>) -> Vec<HashMap<String, ColType>> {
         let mut table_data = vec![];
 
         for row in rows {
@@ -142,7 +132,7 @@ impl Sqlite {
                         let t = row.get::<Option<String>, _>(i);
                         ColType::String(t)
                     }
-                    "INTEGER" => {
+                    "INTEGER" | "INT" | "SERIAL" => {
                         let t = row.get::<Option<i64>, _>(i);
                         ColType::Integer(t)
                     }

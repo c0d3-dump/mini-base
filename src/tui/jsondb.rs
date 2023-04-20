@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::database::{self, sqlite::Sqlite};
+use crate::database::{self, mysql::Mysql, sqlite::Sqlite};
 
 use super::model::{Auth, Conn, Db, Model, QueryList, RoleList};
 
@@ -53,20 +53,11 @@ pub fn from_json() -> Model {
             let conn = database::sqlite::Sqlite::new(&dbpath);
             Conn::SQLITE(conn)
         }
-        Db::MYSQL {
-            host,
-            username,
-            port,
-            password,
-            database,
-        } => todo!(),
-        Db::POSTGRES {
-            host,
-            username,
-            port,
-            password,
-            database,
-        } => todo!(),
+        Db::MYSQL { dbpath } => {
+            let conn = database::mysql::Mysql::new(&dbpath);
+            Conn::MYSQL(conn)
+        }
+        Db::POSTGRES { dbpath } => todo!(),
         Db::None => Conn::None,
     };
 
@@ -80,7 +71,13 @@ pub fn from_json() -> Model {
                 }),
                 None => Conn::None,
             },
-            Conn::MYSQL => todo!(),
+            Conn::MYSQL(c) => match c.connection {
+                Some(con) => Conn::MYSQL(Mysql {
+                    connection: Some(con),
+                    err: None,
+                }),
+                None => Conn::None,
+            },
             Conn::POSTGRES => todo!(),
             Conn::None => Conn::None,
         },

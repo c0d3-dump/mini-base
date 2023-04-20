@@ -36,11 +36,8 @@ fn generate_routes(model: Model) -> Router {
 
         let (_, params) = parser::parse_query(&query.query).unwrap();
 
-        let parsed_query = parser::replace_variables_in_query(
-            parser::DbType::SQLITE,
-            &query.query,
-            params.clone(),
-        );
+        let parsed_query =
+            parser::replace_variables_in_query(parser::DbType::MYSQL, &query.query, params.clone());
 
         let parsed_params = params
             .into_iter()
@@ -116,7 +113,19 @@ async fn run_query(
                 return (StatusCode::OK, out.to_string());
             }
         },
-        Conn::MYSQL => panic!(),
+        Conn::MYSQL(c) => match exectype {
+            ExecType::QUERY => {
+                let rows = c.query_all(&query, args).await;
+                let out = c.parse_all(rows);
+
+                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
+            }
+            ExecType::EXECUTION => {
+                let out = c.execute(&query, args).await;
+
+                return (StatusCode::OK, out.to_string());
+            }
+        },
         Conn::POSTGRES => panic!(),
         Conn::None => panic!(),
     }
