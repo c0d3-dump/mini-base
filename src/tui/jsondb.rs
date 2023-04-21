@@ -5,8 +5,6 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::database::{self, mysql::Mysql, sqlite::Sqlite};
-
 use super::model::{Auth, Conn, Db, Model, QueryList, RoleList};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

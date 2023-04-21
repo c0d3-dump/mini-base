@@ -1,11 +1,4 @@
-use cursive::{
-    utils::span::SpannedString,
-    view::Nameable,
-    views::{Dialog, SelectView},
-    Cursive, View,
-};
-
-use crate::tui::model;
+use cursive::{view::Nameable, views::SelectView, Cursive, View};
 
 pub fn select_component<F>(items: Vec<String>, refname: &str, cb: F) -> impl View
 where
