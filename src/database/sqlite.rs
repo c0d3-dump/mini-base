@@ -65,6 +65,7 @@ impl Sqlite {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
+                ColType::UnsignedInteger(_) => panic!("wrong type"),
                 ColType::Array(_) => todo!(),
                 ColType::Object(_) => todo!(),
             };
@@ -86,6 +87,7 @@ impl Sqlite {
                 ColType::Integer(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
+                ColType::UnsignedInteger(_) => panic!("wrong type"),
                 ColType::Array(_) => todo!(),
                 ColType::Object(_) => todo!(),
             };

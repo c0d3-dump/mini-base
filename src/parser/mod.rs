@@ -8,13 +8,6 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, Clone)]
-pub enum DbType {
-    SQLITE,
-    MYSQL,
-    POSTGRES,
-}
-
 fn parse_identifier(input: &str) -> IResult<&str, &str> {
     preceded(peek(alpha1), take_until("}"))(input)
 }
@@ -52,16 +45,13 @@ pub fn parse_query<'a>(input: &'a str) -> IResult<&'a str, Vec<&'a str>> {
     Ok((input, variables))
 }
 
-pub fn replace_variables_in_query(dbtype: DbType, input: &str, variables: Vec<&str>) -> String {
+pub fn replace_variables_in_query(input: &str, variables: Vec<&str>) -> String {
     let mut out = input.to_string();
 
     variables.into_iter().enumerate().for_each(|(i, var)| {
         let from = format!("${{{var}}}");
 
-        out = match dbtype {
-            DbType::SQLITE | DbType::MYSQL => out.replace::<&str>(from.as_ref(), "?"),
-            DbType::POSTGRES => out.replace::<&str>(from.as_ref(), format!("${i}").as_ref()),
-        };
+        out = out.replace::<&str>(from.as_ref(), "?");
     });
     out
 }

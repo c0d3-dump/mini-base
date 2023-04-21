@@ -4,7 +4,6 @@ use axum_server::Handle;
 use serde::{Deserialize, Serialize};
 
 use crate::database::mysql::Mysql;
-use crate::database::postgres::Postgres;
 use crate::database::sqlite::Sqlite;
 
 #[derive(Clone, Debug, Default)]
@@ -21,7 +20,6 @@ pub struct Model {
 pub enum Conn {
     SQLITE(Sqlite),
     MYSQL(Mysql),
-    POSTGRES(Postgres),
     #[default]
     None,
 }
@@ -95,9 +93,6 @@ pub enum Db {
     MYSQL {
         dbpath: String,
     },
-    POSTGRES {
-        dbpath: String,
-    },
     #[default]
     None,
 }
@@ -106,7 +101,6 @@ pub enum Db {
 pub enum DbType {
     SQLITE,
     MYSQL,
-    POSTGRES,
 }
 
 impl fmt::Display for DbType {
@@ -114,7 +108,6 @@ impl fmt::Display for DbType {
         match self {
             DbType::SQLITE => write!(f, "SQLITE"),
             DbType::MYSQL => write!(f, "MYSQL"),
-            DbType::POSTGRES => write!(f, "POSTGRES"),
         }
     }
 }

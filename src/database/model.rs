@@ -5,13 +5,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ColType {
     Integer(Option<i64>),
+    UnsignedInteger(Option<u64>),
     String(Option<String>),
     Bool(Option<bool>),
     Array(Vec<ColType>),
     Object(HashMap<String, ColType>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColInfo {
     pub cid: i64,
     pub name: String,

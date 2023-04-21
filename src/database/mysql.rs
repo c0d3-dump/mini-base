@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use sqlx::{
-    mysql::{MySqlPool, MySqlPoolOptions, MySqlRow},
+    mysql::{types, MySqlPool, MySqlPoolOptions, MySqlRow},
     Column, Row, TypeInfo,
 };
 
@@ -45,14 +45,12 @@ impl Mysql {
     }
 
     pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Vec<MySqlRow> {
-        dbg!(query);
-        dbg!(args.clone());
-
         let mut q = sqlx::query(&query);
 
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::UnsignedInteger(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
                 ColType::Array(_) => todo!(),
@@ -74,6 +72,7 @@ impl Mysql {
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::UnsignedInteger(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
                 ColType::Array(_) => todo!(),
@@ -132,9 +131,13 @@ impl Mysql {
                         let t = row.get::<Option<String>, _>(i);
                         ColType::String(t)
                     }
-                    "INTEGER" | "INT" | "SERIAL" => {
+                    "INTEGER" | "INT" | "BIGINT" => {
                         let t = row.get::<Option<i64>, _>(i);
                         ColType::Integer(t)
+                    }
+                    "BIGINT UNSIGNED" => {
+                        let t = row.get::<Option<u64>, _>(i);
+                        ColType::UnsignedInteger(t)
                     }
                     _ => panic!("wrong type found!"),
                 };

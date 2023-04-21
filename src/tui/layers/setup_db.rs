@@ -18,18 +18,13 @@ pub fn select_dbtype(s: &mut Cursive) {
         let dbtype = match idx {
             0 => DbType::SQLITE,
             1 => DbType::MYSQL,
-            2 => DbType::POSTGRES,
             _ => panic!("error: dbtype selection"),
         };
 
         setup_db_connection(s, dbtype);
     };
 
-    let dbtype = vec![
-        DbType::SQLITE.to_string(),
-        DbType::MYSQL.to_string(),
-        DbType::POSTGRES.to_string(),
-    ];
+    let dbtype = vec![DbType::SQLITE.to_string(), DbType::MYSQL.to_string()];
 
     let select = components::selector::select_component(dbtype, "select_dbtype", on_select);
 
@@ -61,32 +56,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 let conn = database::mysql::Mysql::new(&dbpath);
 
                 (dbpath, Conn::MYSQL(conn))
-            }
-            DbType::POSTGRES => {
-                let host = utils::get_data_from_refname::<EditView>(s, "host")
-                    .get_content()
-                    .to_string();
-                let username = utils::get_data_from_refname::<EditView>(s, "username")
-                    .get_content()
-                    .to_string();
-                let port = utils::get_data_from_refname::<EditView>(s, "port")
-                    .get_content()
-                    .parse::<u16>()
-                    .unwrap();
-                let password = utils::get_data_from_refname::<EditView>(s, "password")
-                    .get_content()
-                    .to_string();
-                let database = utils::get_data_from_refname::<EditView>(s, "database")
-                    .get_content()
-                    .to_string();
-                panic!();
-                // Db::POSTGRES {
-                //     host,
-                //     username,
-                //     port,
-                //     password,
-                //     database: Some(database),
-                // }
             }
         };
 

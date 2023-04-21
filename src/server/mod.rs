@@ -36,15 +36,7 @@ fn generate_routes(model: Model) -> Router {
 
         let (_, params) = parser::parse_query(&query.query).unwrap();
 
-        let parse_dbtype = match model.db {
-            crate::tui::model::Db::SQLITE { .. } => parser::DbType::SQLITE,
-            crate::tui::model::Db::MYSQL { .. } => parser::DbType::MYSQL,
-            crate::tui::model::Db::POSTGRES { .. } => parser::DbType::POSTGRES,
-            _ => panic!("no db selected"),
-        };
-
-        let parsed_query =
-            parser::replace_variables_in_query(parse_dbtype, &query.query, params.clone());
+        let parsed_query = parser::replace_variables_in_query(&query.query, params.clone());
 
         let parsed_params = params
             .into_iter()
@@ -121,19 +113,6 @@ async fn run_query(
             }
         },
         Conn::MYSQL(c) => match exectype {
-            ExecType::QUERY => {
-                let rows = c.query_all(&query, args).await;
-                let out = c.parse_all(rows);
-
-                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
-            }
-            ExecType::EXECUTION => {
-                let out = c.execute(&query, args).await;
-
-                return (StatusCode::OK, out.to_string());
-            }
-        },
-        Conn::POSTGRES(c) => match exectype {
             ExecType::QUERY => {
                 let rows = c.query_all(&query, args).await;
                 let out = c.parse_all(rows);
