@@ -48,7 +48,7 @@ pub fn parse_query<'a>(input: &'a str) -> IResult<&'a str, Vec<&'a str>> {
 pub fn replace_variables_in_query(input: &str, variables: Vec<&str>) -> String {
     let mut out = input.to_string();
 
-    variables.into_iter().enumerate().for_each(|(i, var)| {
+    variables.into_iter().enumerate().for_each(|(_i, var)| {
         let from = format!("${{{var}}}");
 
         out = out.replace::<&str>(from.as_ref(), "?");

@@ -1,7 +1,5 @@
 use cursive::{
-    view::Nameable,
-    views::{Dialog, ListView, SelectView},
-    Cursive, View,
+    views::{ListView}, View,
 };
 
 pub fn list_component<V>(items: Vec<(String, V)>) -> impl View

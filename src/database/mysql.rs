@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use sqlx::{
-    mysql::{types, MySqlPool, MySqlPoolOptions, MySqlRow},
+    mysql::{MySqlPool, MySqlPoolOptions, MySqlRow},
     Column, Row, TypeInfo,
 };
 
