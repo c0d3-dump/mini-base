@@ -43,7 +43,9 @@ pub fn display_dashboard(s: &mut Cursive) {
                 crate::tui::model::Conn::MYSQL(c) => {
                     futures::executor::block_on(c.connection.unwrap().close());
                 }
-                crate::tui::model::Conn::POSTGRES => todo!(),
+                crate::tui::model::Conn::POSTGRES(c) => {
+                    futures::executor::block_on(c.connection.unwrap().close());
+                }
                 _ => panic!("no database detected!"),
             }
 

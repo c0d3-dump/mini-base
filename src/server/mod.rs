@@ -133,7 +133,19 @@ async fn run_query(
                 return (StatusCode::OK, out.to_string());
             }
         },
-        Conn::POSTGRES => panic!(),
+        Conn::POSTGRES(c) => match exectype {
+            ExecType::QUERY => {
+                let rows = c.query_all(&query, args).await;
+                let out = c.parse_all(rows);
+
+                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
+            }
+            ExecType::EXECUTION => {
+                let out = c.execute(&query, args).await;
+
+                return (StatusCode::OK, out.to_string());
+            }
+        },
         Conn::None => panic!(),
     }
 }

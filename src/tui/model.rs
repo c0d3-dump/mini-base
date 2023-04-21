@@ -4,6 +4,7 @@ use axum_server::Handle;
 use serde::{Deserialize, Serialize};
 
 use crate::database::mysql::Mysql;
+use crate::database::postgres::Postgres;
 use crate::database::sqlite::Sqlite;
 
 #[derive(Clone, Debug, Default)]
@@ -20,7 +21,7 @@ pub struct Model {
 pub enum Conn {
     SQLITE(Sqlite),
     MYSQL(Mysql),
-    POSTGRES,
+    POSTGRES(Postgres),
     #[default]
     None,
 }
