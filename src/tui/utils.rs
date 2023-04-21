@@ -46,5 +46,5 @@ pub fn update_query_with_model(s: &mut Cursive) {
 
 pub fn update_model(s: &mut Cursive) {
     let model = get_current_model(s);
-    jsondb::to_json(model.clone());
+    jsondb::to_json(model);
 }

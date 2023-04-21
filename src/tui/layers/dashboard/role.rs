@@ -30,7 +30,7 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 
     let role_list = components::selector::select_component(role_list_items, "role_list", on_select);
 
-    let on_add_role = |s: &mut Cursive| add_role(s);
+    let on_add_role = add_role;
 
     Dialog::new()
         .title("role")
@@ -98,7 +98,7 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             .to_string();
 
         let rolelist = RoleList {
-            label: label.to_string(),
+            label,
             approval_required: *boolean_group.selection(),
             role_access: roleaccess,
         };

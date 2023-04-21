@@ -8,19 +8,13 @@ use sqlx::{
 use super::model::{ColInfo, ColType};
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct Mysql {
     pub connection: Option<MySqlPool>,
     pub err: Option<(String, String)>,
 }
 
-impl Default for Mysql {
-    fn default() -> Self {
-        Self {
-            connection: None,
-            err: None,
-        }
-    }
-}
+
 
 impl Mysql {
     #[tokio::main]
@@ -45,7 +39,7 @@ impl Mysql {
     }
 
     pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Vec<MySqlRow> {
-        let mut q = sqlx::query(&query);
+        let mut q = sqlx::query(query);
 
         for arg in args {
             q = match arg {
@@ -67,7 +61,7 @@ impl Mysql {
     }
 
     pub async fn execute(&self, query: &str, args: Vec<ColType>) -> u64 {
-        let mut q = sqlx::query(&query);
+        let mut q = sqlx::query(query);
 
         for arg in args {
             q = match arg {
@@ -102,17 +96,9 @@ impl Mysql {
                 cid: row.get::<i64, _>(0),
                 name: row.get::<&str, _>(1).to_string(),
                 ctype: row.get::<&str, _>(2).to_string(),
-                notnull: if row.get::<i8, _>(3) == 1 {
-                    true
-                } else {
-                    false
-                },
+                notnull: row.get::<i8, _>(3) == 1,
                 dflt_value: row.get::<Option<String>, _>(4),
-                pk: if row.get::<i8, _>(5) == 1 {
-                    true
-                } else {
-                    false
-                },
+                pk: row.get::<i8, _>(5) == 1,
             });
         }
 

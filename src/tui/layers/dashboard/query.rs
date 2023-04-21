@@ -29,7 +29,7 @@ pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let query_list =
         components::selector::select_component(query_list_items, "query_list", on_select);
 
-    let on_add_query = |s: &mut Cursive| add_query(s);
+    let on_add_query = add_query;
 
     Dialog::new()
         .title("query")
@@ -46,7 +46,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     list.add_child(
         "label",
         EditView::new()
-            .content(&query.label.to_string())
+            .content(&query.label)
             .with_name("edit_query_label"),
     );
 
@@ -58,7 +58,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             .child(
                 boolean_group
                     .button(ExecType::EXECUTION, "Execution")
-                    .with_if(query.exec_type.to_owned() == ExecType::EXECUTION, |b| {
+                    .with_if(query.exec_type == ExecType::EXECUTION, |b| {
                         b.select();
                     }),
             ),
@@ -100,7 +100,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
         let query = get_current_model(s).querylist.get(idx).unwrap().to_owned();
         let querylist = QueryList {
-            label: label.to_string(),
+            label,
             exec_type: boolean_group.selection().as_ref().to_owned(),
             role_access: rolelist,
             query: query.query,

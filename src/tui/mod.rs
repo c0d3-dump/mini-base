@@ -12,7 +12,7 @@ pub fn run() {
 
     let model = jsondb::from_json();
 
-    app.set_user_data(model.clone());
+    app.set_user_data(model);
 
     layers::setup_db::select_dbtype(&mut app);
 

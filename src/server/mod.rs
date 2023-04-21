@@ -63,7 +63,7 @@ async fn handler(
     dbconn: Conn,
     exectype: ExecType,
 ) -> (StatusCode, String) {
-    if params.len() > 0 {
+    if !params.is_empty() {
         let r_json: Result<Value, serde_json::Error> = serde_json::from_str(&body);
 
         let res = match r_json {
@@ -77,7 +77,7 @@ async fn handler(
                         Value::String(t) => ColType::String(Some(t)),
                         Value::Array(_) => todo!(),
                         Value::Object(_) => todo!(),
-                        Value::Null => todo!(),
+                        Value::Null => ColType::Bool(None),
                     })
                     .collect::<Vec<ColType>>();
 
@@ -104,12 +104,12 @@ async fn run_query(
                 let rows = c.query_all(&query, args).await;
                 let out = c.parse_all(rows);
 
-                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
+                (StatusCode::OK, serde_json::to_string(&out).unwrap())
             }
             ExecType::EXECUTION => {
                 let out = c.execute(&query, args).await;
 
-                return (StatusCode::OK, out.to_string());
+                (StatusCode::OK, out.to_string())
             }
         },
         Conn::MYSQL(c) => match exectype {
@@ -117,12 +117,12 @@ async fn run_query(
                 let rows = c.query_all(&query, args).await;
                 let out = c.parse_all(rows);
 
-                return (StatusCode::OK, serde_json::to_string(&out).unwrap());
+                (StatusCode::OK, serde_json::to_string(&out).unwrap())
             }
             ExecType::EXECUTION => {
                 let out = c.execute(&query, args).await;
 
-                return (StatusCode::OK, out.to_string());
+                (StatusCode::OK, out.to_string())
             }
         },
         Conn::None => panic!(),
