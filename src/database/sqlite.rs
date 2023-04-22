@@ -7,14 +7,11 @@ use sqlx::{
 
 use super::model::{ColInfo, ColType};
 
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Sqlite {
     pub connection: Option<SqlitePool>,
     pub err: Option<(String, String)>,
 }
-
-
 
 impl Sqlite {
     #[tokio::main]

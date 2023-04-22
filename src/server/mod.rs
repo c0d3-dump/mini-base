@@ -13,10 +13,15 @@ use crate::{
     tui::model::{Conn, ExecType, Model},
 };
 
+mod auth;
+mod model;
+mod utils;
+
 #[tokio::main]
 pub async fn start_server(model: Model, handle: Handle) {
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
+        .nest("/auth", auth::generate_auth_routes(model.clone()))
         .nest("/api", generate_routes(model));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
