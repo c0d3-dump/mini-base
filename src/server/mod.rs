@@ -1,5 +1,6 @@
 use axum::{
     http::StatusCode,
+    middleware,
     routing::{get, post},
     Router,
 };
@@ -22,7 +23,10 @@ pub async fn start_server(model: Model, handle: Handle) {
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
         .nest("/auth", auth::generate_auth_routes(model.clone()))
-        .nest("/api", generate_routes(model));
+        .nest(
+            "/api",
+            generate_routes(model).route_layer(middleware::from_fn(auth::middleware)),
+        );
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
