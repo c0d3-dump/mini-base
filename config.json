@@ -1,1 +1,1 @@
-{"rolelist":["user","admin"],"querylist":[{"label":"test","exec_type":"QUERY","role_access":["user"],"query":"SELECT * FROM users WHERE id=${id};"}]}
+{"rolelist":["user","admin"],"querylist":[{"label":"test","exec_type":"QUERY","role_access":["user"],"query":"SELECT * FROM users;"}]}

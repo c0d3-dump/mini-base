@@ -13,11 +13,6 @@ where
     selectview.on_submit(cb).with_name(refname)
 }
 
-pub fn add_to_select_component(s: &mut Cursive, refname: &str, item: String, idx: usize) {
-    let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
-    selectview.add_item(item, idx);
-}
-
 pub fn update_select_component(s: &mut Cursive, refname: &str, items: Vec<String>) {
     let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
 

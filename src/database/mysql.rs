@@ -19,10 +19,24 @@ impl Mysql {
         let opt_connection = MySqlPoolOptions::new().connect(dbpath).await;
 
         match opt_connection {
-            Ok(connection) => Self {
-                connection: Some(connection),
-                err: None,
-            },
+            Ok(connection) => {
+                let query = "
+                CREATE TABLE
+                    IF NOT EXISTS users(
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        email VARCHAR(100) UNIQUE NOT NULL,
+                        password VARCHAR(255) NOT NULL,
+                        role VARCHAR(20)
+                    );";
+
+                let q = sqlx::query(query);
+                let _ = q.execute(&connection).await.unwrap();
+
+                Self {
+                    connection: Some(connection),
+                    err: None,
+                }
+            }
             Err(err) => {
                 let code = err.as_database_error().unwrap().code().unwrap().to_string();
                 let msg = err.as_database_error().unwrap().message().to_string();
