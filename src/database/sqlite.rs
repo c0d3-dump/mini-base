@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File};
+use std::{collections::HashMap, fs::File, path::Path};
 
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
@@ -32,10 +32,18 @@ impl Sqlite {
         let opt_connection = SqlitePoolOptions::new().connect(dbpath).await;
 
         match opt_connection {
-            Ok(connection) => Self {
-                connection: Some(connection),
-                err: None,
-            },
+            Ok(connection) => {
+                let mig = sqlx::migrate::Migrator::new(Path::new("./migrations"))
+                    .await
+                    .unwrap();
+
+                let _ = mig.run(&connection).await.unwrap();
+
+                Self {
+                    connection: Some(connection),
+                    err: None,
+                }
+            }
             Err(err) => {
                 let code = err.as_database_error().unwrap().code().unwrap().to_string();
                 let msg = err.as_database_error().unwrap().message().to_string();

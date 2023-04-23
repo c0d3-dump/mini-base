@@ -1,1 +1,1 @@
-{"auth":[],"rolelist":["user","admin"],"querylist":[{"label":"test","exec_type":"QUERY","role_access":["user"],"query":"SELECT * FROM users WHERE id=${id};"},{"label":"new-user","exec_type":"EXECUTION","role_access":[],"query":"INSERT INTO users (name) VALUES (${name});"}]}
+{"rolelist":["user","admin"],"querylist":[{"label":"test","exec_type":"QUERY","role_access":["user"],"query":"SELECT * FROM users WHERE id=${id};"}]}

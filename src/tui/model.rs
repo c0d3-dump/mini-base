@@ -10,7 +10,6 @@ use crate::database::sqlite::Sqlite;
 pub struct Model {
     pub db: Db,
     pub conn: Conn,
-    pub auth: Vec<Auth>,
     pub rolelist: Vec<String>,
     pub querylist: Vec<QueryList>,
     pub handle: Option<Handle>,
@@ -46,14 +45,6 @@ impl fmt::Display for ExecType {
             ExecType::EXECUTION => write!(f, "Execution"),
         }
     }
-}
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub enum Auth {
-    #[default]
-    EMAIL,
-    GOOGLE,
-    GITHUB,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

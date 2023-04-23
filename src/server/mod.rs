@@ -19,7 +19,7 @@ use crate::{
 };
 
 mod auth;
-mod model;
+pub mod model;
 mod utils;
 
 #[tokio::main]

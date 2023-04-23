@@ -176,7 +176,24 @@ async fn authorize_current_user(state: AuthState, auth_token: &str) -> Option<Us
                         Err(_) => None,
                     }
                 }
-                Conn::MYSQL(_) => todo!(),
+                Conn::MYSQL(c) => {
+                    let query = "SELECT * FROM users WHERE email = ?";
+
+                    let conn = match c.clone().connection {
+                        Some(conn) => conn,
+                        None => panic!("database not connected"),
+                    };
+
+                    let r_out: Result<User, sqlx::Error> = sqlx::query_as(query)
+                        .bind(user.email)
+                        .fetch_one(&conn)
+                        .await;
+
+                    match r_out {
+                        Ok(u) => Some(u),
+                        Err(_) => None,
+                    }
+                }
                 Conn::None => None,
             }
         }

@@ -5,18 +5,16 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use super::model::{Auth, Conn, Db, Model, QueryList};
+use super::model::{Conn, Db, Model, QueryList};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
-    pub auth: Vec<Auth>,
     pub rolelist: Vec<String>,
     pub querylist: Vec<QueryList>,
 }
 
 pub fn to_json(model: Model) {
     let inter_model = IntermediateModel {
-        auth: model.auth,
         rolelist: model.rolelist,
         querylist: model.querylist,
     };
@@ -48,7 +46,6 @@ pub fn from_json() -> Model {
         db: Db::None,
         conn: Conn::None,
         handle: None,
-        auth: inter_model.auth,
         rolelist: inter_model.rolelist,
         querylist: inter_model.querylist,
     }

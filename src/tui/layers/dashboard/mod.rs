@@ -13,6 +13,7 @@ use crate::tui::{
     utils::{self, get_current_mut_model},
 };
 
+pub mod auth;
 pub mod editor;
 pub mod query;
 pub mod role;
@@ -21,14 +22,15 @@ pub mod server;
 pub fn display_dashboard(s: &mut Cursive) {
     let sidebar_items = vec![
         Sidebar::ROLE.to_string(),
+        Sidebar::AUTH.to_string(),
         Sidebar::QUERY.to_string(),
         Sidebar::EDITOR.to_string(),
         Sidebar::SERVER.to_string(),
-        "Quit".to_string(), // 4
+        "Quit".to_string(), // 5
     ];
 
     let on_select = |s: &mut Cursive, idx: &usize| {
-        if *idx == 4 {
+        if *idx == 5 {
             let handle_model = get_current_mut_model(s);
 
             match handle_model.clone().handle {
@@ -65,6 +67,7 @@ pub fn display_dashboard(s: &mut Cursive) {
     let mut dashboards = ScreensView::default();
 
     dashboards.add_active_screen(role::role_dashboard(s));
+    dashboards.add_screen(auth::auth_dashboard(s));
     dashboards.add_screen(query::query_dashboard(s));
     dashboards.add_screen(editor::editor_dashboard(s));
     dashboards.add_screen(server::server_dashboard(s));
