@@ -24,28 +24,6 @@ pub enum Conn {
     None,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
-pub enum RoleAccess {
-    #[default]
-    NONE,
-    READ,
-    CREATE,
-    DELETE,
-    UPDATE,
-}
-
-impl fmt::Display for RoleAccess {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            RoleAccess::NONE => write!(f, "None"),
-            RoleAccess::READ => write!(f, "Read"),
-            RoleAccess::CREATE => write!(f, "Create"),
-            RoleAccess::DELETE => write!(f, "Delete"),
-            RoleAccess::UPDATE => write!(f, "Update"),
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct QueryList {
     pub label: String,
@@ -111,7 +89,6 @@ pub enum Sidebar {
     ROLE,
     QUERY,
     EDITOR,
-    DOCS,
     SERVER,
 }
 
@@ -122,7 +99,6 @@ impl fmt::Display for Sidebar {
             Sidebar::ROLE => write!(f, "ROLE"),
             Sidebar::QUERY => write!(f, "QUERY"),
             Sidebar::EDITOR => write!(f, "EDITOR"),
-            Sidebar::DOCS => write!(f, "DOCS"),
             Sidebar::SERVER => write!(f, "SERVER"),
         }
     }

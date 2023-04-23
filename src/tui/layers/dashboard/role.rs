@@ -1,15 +1,12 @@
 use cursive::{
-    direction::Orientation,
     view::{Nameable, Resizable},
-    views::{
-        Checkbox, Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView,
-    },
-    Cursive, With,
+    views::{Dialog, EditView, ListView, NamedView, ResizedView},
+    Cursive,
 };
 
 use crate::tui::{
     components,
-    model::{Model, RoleAccess, Sidebar},
+    model::{Model, Sidebar},
     utils::{
         get_current_model, get_current_mut_model, get_data_from_refname, update_role_with_model,
     },
@@ -18,17 +15,11 @@ use crate::tui::{
 pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let model = get_current_model(s);
 
-    let role_list_items = model
-        .rolelist
-        .into_iter()
-        .map(|r| r)
-        .collect::<Vec<String>>();
-
     let on_select = |s: &mut Cursive, idx: &usize| {
         edit_role(s, *idx);
     };
 
-    let role_list = components::selector::select_component(role_list_items, "role_list", on_select);
+    let role_list = components::selector::select_component(model.rolelist, "role_list", on_select);
 
     let on_add_role = add_role;
 

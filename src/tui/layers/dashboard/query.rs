@@ -65,10 +65,9 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     );
 
     let model = get_current_model(s);
-    let all_rolelist = model.rolelist;
 
     let mut role_list = vec![];
-    for ra in all_rolelist {
+    for ra in model.rolelist {
         if query.clone().role_access.contains(&ra) {
             role_list.push((ra.to_string(), true));
         } else {
@@ -81,9 +80,8 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
     let on_submit = move |s: &mut Cursive| {
         let model = get_current_model(s);
-        let all_rolelist = model.rolelist;
 
-        let rolelist = components::checkbox_group::get_checked_data(s, all_rolelist);
+        let rolelist = components::checkbox_group::get_checked_data(s, model.rolelist);
 
         let label = s
             .call_on_name("edit_query_label", |view: &mut EditView| view.get_content())

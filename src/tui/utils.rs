@@ -21,13 +21,7 @@ pub fn update_role_with_model(s: &mut Cursive) {
     let model = get_current_model(s);
     jsondb::to_json(model.clone());
 
-    let role_list_items = model
-        .rolelist
-        .into_iter()
-        .map(|r| r)
-        .collect::<Vec<String>>();
-
-    components::selector::update_select_component(s, "role_list", role_list_items);
+    components::selector::update_select_component(s, "role_list", model.rolelist);
 }
 
 pub fn update_query_with_model(s: &mut Cursive) {

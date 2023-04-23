@@ -5,10 +5,10 @@ use super::{
 use axum::{
     extract::State,
     http::{header, Request, StatusCode},
-    middleware::{self, Next},
+    middleware::Next,
     response::Response,
     routing::post,
-    Extension, Router,
+    Router,
 };
 
 use crate::{
@@ -25,7 +25,7 @@ pub fn generate_auth_routes(model: Model) -> Router {
         curr_role: vec![],
     };
 
-    let router = Router::new()
+    Router::new()
         .route("/logout", post(logout))
         // .route_layer(middleware::from_fn_with_state(
         //     authstate.clone(),
@@ -33,9 +33,7 @@ pub fn generate_auth_routes(model: Model) -> Router {
         // ))
         .route("/signup", post(signup))
         .route("/login", post(login))
-        .with_state(authstate);
-
-    router
+        .with_state(authstate)
 }
 
 async fn signup(State(state): State<AuthState>, body: String) -> (StatusCode, String) {

@@ -1,6 +1,4 @@
-use cursive::{
-    views::{ListView}, View,
-};
+use cursive::{views::ListView, View};
 
 pub fn list_component<V>(items: Vec<(String, V)>) -> impl View
 where
