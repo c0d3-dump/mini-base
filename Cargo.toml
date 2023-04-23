@@ -20,3 +20,4 @@ digest = "0.10.6"
 axum-extra = { version = "0.7.4", features = ["cookie"] }
 tower-http = { version = "0.4.0", features = ["cors"] }
 jsonwebtoken = "8.3.0"
+sha2 = "0.10.6"

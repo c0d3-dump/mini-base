@@ -1,5 +1,8 @@
 use axum::{
-    http::StatusCode,
+    http::{
+        header::{ACCEPT, AUTHORIZATION},
+        Method, StatusCode,
+    },
     middleware,
     routing::{get, post},
     Router,
@@ -7,6 +10,7 @@ use axum::{
 use axum_server::Handle;
 use serde_json::Value;
 use std::net::SocketAddr;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     database::model::ColType,
@@ -23,9 +27,12 @@ pub async fn start_server(model: Model, handle: Handle) {
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
         .nest("/auth", auth::generate_auth_routes(model.clone()))
-        .nest(
-            "/api",
-            generate_routes(model).route_layer(middleware::from_fn(auth::middleware)),
+        .nest("/api", generate_routes(model))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods([Method::POST])
+                .allow_headers([AUTHORIZATION, ACCEPT]),
         );
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -54,11 +61,17 @@ fn generate_routes(model: Model) -> Router {
 
         let dbconn = model.conn.clone();
 
+        let authstate = model::AuthState {
+            dbconn: model.clone().conn,
+            curr_role: query.role_access,
+        };
+
         router = router.route(
             &path,
             post(move |body: String| {
                 handler(body, parsed_query, parsed_params, dbconn, query.exec_type)
-            }),
+            })
+            .route_layer(middleware::from_fn_with_state(authstate, auth::middleware)),
         );
     }
 

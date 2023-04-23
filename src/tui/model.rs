@@ -11,7 +11,7 @@ pub struct Model {
     pub db: Db,
     pub conn: Conn,
     pub auth: Vec<Auth>,
-    pub rolelist: Vec<RoleList>,
+    pub rolelist: Vec<String>,
     pub querylist: Vec<QueryList>,
     pub handle: Option<Handle>,
 }
@@ -22,13 +22,6 @@ pub enum Conn {
     MYSQL(Mysql),
     #[default]
     None,
-}
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct RoleList {
-    pub label: String,
-    pub approval_required: bool,
-    pub role_access: Vec<RoleAccess>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]

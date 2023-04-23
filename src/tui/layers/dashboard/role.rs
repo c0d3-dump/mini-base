@@ -9,7 +9,7 @@ use cursive::{
 
 use crate::tui::{
     components,
-    model::{Model, RoleAccess, RoleList, Sidebar},
+    model::{Model, RoleAccess, Sidebar},
     utils::{
         get_current_model, get_current_mut_model, get_data_from_refname, update_role_with_model,
     },
@@ -21,7 +21,7 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let role_list_items = model
         .rolelist
         .into_iter()
-        .map(|r| r.label)
+        .map(|r| r)
         .collect::<Vec<String>>();
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -46,65 +46,17 @@ fn edit_role(s: &mut Cursive, idx: usize) {
     let mut list = ListView::new();
     list.add_child(
         "label",
-        EditView::new().content(role.label).with_name("edit_label"),
+        EditView::new().content(role).with_name("edit_label"),
     );
-
-    let mut boolean_group: RadioGroup<bool> = RadioGroup::new();
-    list.add_child(
-        "approval required",
-        LinearLayout::new(Orientation::Horizontal)
-            .child(boolean_group.button(false, "false"))
-            .child(
-                boolean_group
-                    .button(true, "true")
-                    .with_if(role.approval_required, |b| {
-                        b.select();
-                    }),
-            ),
-    );
-
-    let all_roles = vec![
-        RoleAccess::READ,
-        RoleAccess::CREATE,
-        RoleAccess::DELETE,
-        RoleAccess::UPDATE,
-    ];
-    let mut role_access_list = vec![];
-    for ra in all_roles {
-        if role.role_access.contains(&ra) {
-            role_access_list.push((ra.to_string(), true));
-        } else {
-            role_access_list.push((ra.to_string(), false));
-        }
-    }
-
-    let check_box =
-        components::checkbox_group::checkbox_group_component("role_access", role_access_list);
-    list.add_child("role access", check_box);
 
     let on_submit = move |s: &mut Cursive| {
-        let all_roles = vec![
-            RoleAccess::READ,
-            RoleAccess::CREATE,
-            RoleAccess::DELETE,
-            RoleAccess::UPDATE,
-        ];
-
-        let roleaccess = get_checked_role_access_data(s, all_roles);
-
         let label = s
             .call_on_name("edit_label", |view: &mut EditView| view.get_content())
             .unwrap()
             .to_string();
 
-        let rolelist = RoleList {
-            label,
-            approval_required: *boolean_group.selection(),
-            role_access: roleaccess,
-        };
-
         let model = get_current_mut_model(s);
-        model.rolelist[idx] = rolelist;
+        model.rolelist[idx] = label;
 
         update_role_with_model(s);
 
@@ -139,11 +91,7 @@ fn add_role(s: &mut Cursive) {
         let data = get_data_from_refname::<EditView>(s, "add_role_text");
 
         s.with_user_data(|m: &mut Model| {
-            m.rolelist.push(RoleList {
-                label: data.get_content().to_string(),
-                approval_required: false,
-                role_access: vec![],
-            });
+            m.rolelist.push(data.get_content().to_string());
         })
         .unwrap();
 
@@ -165,20 +113,4 @@ fn add_role(s: &mut Cursive) {
             .button("submit", on_submit)
             .button("cancel", on_cancel),
     );
-}
-
-pub fn get_checked_role_access_data(
-    s: &mut Cursive,
-    all_items: Vec<RoleAccess>,
-) -> Vec<RoleAccess> {
-    let mut checked_items = vec![];
-
-    for i in all_items {
-        let checkbox = s.find_name::<Checkbox>(&i.to_string()).unwrap();
-        if checkbox.is_checked() {
-            checked_items.push(i);
-        }
-    }
-
-    checked_items
 }

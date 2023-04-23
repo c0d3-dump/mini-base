@@ -65,11 +65,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     );
 
     let model = get_current_model(s);
-    let all_rolelist = model
-        .rolelist
-        .into_iter()
-        .map(|r| r.label)
-        .collect::<Vec<String>>();
+    let all_rolelist = model.rolelist;
 
     let mut role_list = vec![];
     for ra in all_rolelist {
@@ -85,11 +81,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
     let on_submit = move |s: &mut Cursive| {
         let model = get_current_model(s);
-        let all_rolelist = model
-            .rolelist
-            .into_iter()
-            .map(|r| r.label)
-            .collect::<Vec<String>>();
+        let all_rolelist = model.rolelist;
 
         let rolelist = components::checkbox_group::get_checked_data(s, all_rolelist);
 

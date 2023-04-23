@@ -5,16 +5,13 @@ use sqlx::{
     Column, Row, TypeInfo,
 };
 
-use super::model::{ColInfo, ColType};
+use super::model::ColType;
 
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Mysql {
     pub connection: Option<MySqlPool>,
     pub err: Option<(String, String)>,
 }
-
-
 
 impl Mysql {
     #[tokio::main]
@@ -82,27 +79,6 @@ impl Mysql {
         let out = q.execute(conn).await.unwrap();
 
         out.rows_affected()
-    }
-
-    pub async fn get_table_info(&self, name: &str) -> Vec<ColInfo> {
-        let q = format!("PRAGMA table_info({})", name);
-
-        let rows = self.query_all(&q, vec![]).await;
-
-        let mut info: Vec<ColInfo> = vec![];
-
-        for row in rows {
-            info.push(ColInfo {
-                cid: row.get::<i64, _>(0),
-                name: row.get::<&str, _>(1).to_string(),
-                ctype: row.get::<&str, _>(2).to_string(),
-                notnull: row.get::<i8, _>(3) == 1,
-                dflt_value: row.get::<Option<String>, _>(4),
-                pk: row.get::<i8, _>(5) == 1,
-            });
-        }
-
-        info
     }
 
     pub fn parse_all(&self, rows: Vec<MySqlRow>) -> Vec<HashMap<String, ColType>> {

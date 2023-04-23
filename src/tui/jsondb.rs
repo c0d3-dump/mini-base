@@ -5,12 +5,12 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use super::model::{Auth, Conn, Db, Model, QueryList, RoleList};
+use super::model::{Auth, Conn, Db, Model, QueryList};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
     pub auth: Vec<Auth>,
-    pub rolelist: Vec<RoleList>,
+    pub rolelist: Vec<String>,
     pub querylist: Vec<QueryList>,
 }
 
