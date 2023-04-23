@@ -9,12 +9,9 @@ use crate::{
     database::model::ColType,
     server::model::User,
     tui::{
-        components::{
-            self,
-            selector::{update_select_component, update_select_component_with_ids},
-        },
+        components::{self, selector::update_select_component_with_ids},
         model::{Conn, Sidebar},
-        utils::{get_current_model, get_data_from_refname},
+        utils::get_current_model,
     },
 };
 
@@ -49,7 +46,6 @@ pub fn auth_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     };
 
     let users_ids: Vec<usize> = users
-        .clone()
         .into_iter()
         .map(|u| u.id as usize)
         .collect::<Vec<usize>>();

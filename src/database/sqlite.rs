@@ -37,7 +37,7 @@ impl Sqlite {
                     .await
                     .unwrap();
 
-                let _ = mig.run(&connection).await.unwrap();
+                mig.run(&connection).await.unwrap();
 
                 Self {
                     connection: Some(connection),
