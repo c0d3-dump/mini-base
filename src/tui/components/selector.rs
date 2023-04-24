@@ -1,4 +1,8 @@
-use cursive::{view::Nameable, views::SelectView, Cursive, View};
+use cursive::{
+    view::{Nameable, Scrollable},
+    views::SelectView,
+    Cursive, View,
+};
 
 pub fn select_component<F>(items: Vec<String>, refname: &str, cb: F) -> impl View
 where
@@ -10,7 +14,7 @@ where
         selectview.add_item(items.get(i).unwrap(), i);
     }
 
-    selectview.on_submit(cb).with_name(refname)
+    selectview.on_submit(cb).with_name(refname).scrollable()
 }
 
 pub fn update_select_component(s: &mut Cursive, refname: &str, items: Vec<String>) {

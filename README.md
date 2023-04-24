@@ -4,4 +4,4 @@
 * axum - web framework
 * cursive - tui library
 * jsonwebtoken - authentication
-* pbkdf2 - password hashing
+* sha2 - password hashing
