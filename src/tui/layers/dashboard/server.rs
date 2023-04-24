@@ -79,9 +79,10 @@ fn update_logs(s: &mut Cursive) {
     let model = get_current_model(s);
 
     let mut logs = get_data_from_refname::<ListView>(s, "server_logs");
+    logs.clear();
     for q in model.querylist {
         logs.add_child(
-            q.label,
+            format!("/api/{}", q.label),
             TextView::new(q.exec_type.to_string()).align(Align::center_right()),
         );
     }
