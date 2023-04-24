@@ -11,6 +11,7 @@ pub struct Model {
     pub db: Db,
     pub conn: Conn,
     pub rolelist: Vec<String>,
+    pub default_role: String,
     pub querylist: Vec<QueryList>,
     pub handle: Option<Handle>,
 }

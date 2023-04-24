@@ -64,6 +64,7 @@ fn generate_routes(model: Model) -> Router {
         let authstate = model::AuthState {
             dbconn: model.clone().conn,
             curr_role: query.role_access,
+            default_role: model.clone().default_role,
         };
 
         router = router.route(

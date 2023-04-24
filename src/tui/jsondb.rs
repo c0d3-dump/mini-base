@@ -10,12 +10,14 @@ use super::model::{Conn, Db, Model, QueryList};
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
     pub rolelist: Vec<String>,
+    pub default_role: String,
     pub querylist: Vec<QueryList>,
 }
 
 pub fn to_json(model: Model) {
     let inter_model = IntermediateModel {
         rolelist: model.rolelist,
+        default_role: model.default_role,
         querylist: model.querylist,
     };
     let data = serde_json::to_string(&inter_model).unwrap();
@@ -47,6 +49,7 @@ pub fn from_json() -> Model {
         conn: Conn::None,
         handle: None,
         rolelist: inter_model.rolelist,
+        default_role: inter_model.default_role,
         querylist: inter_model.querylist,
     }
 }

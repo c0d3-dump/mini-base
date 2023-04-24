@@ -23,14 +23,11 @@ pub fn generate_auth_routes(model: Model) -> Router {
     let authstate = AuthState {
         dbconn: model.conn,
         curr_role: vec![],
+        default_role: model.default_role,
     };
 
     Router::new()
         .route("/logout", post(logout))
-        // .route_layer(middleware::from_fn_with_state(
-        //     authstate.clone(),
-        //     middleware,
-        // ))
         .route("/signup", post(signup))
         .route("/login", post(login))
         .with_state(authstate)
@@ -92,10 +89,14 @@ async fn login(State(state): State<AuthState>, body: String) -> (StatusCode, Str
                             )
                         } else {
                             let token = generate_token(u.clone()).unwrap();
+                            let mut role = u.role;
+                            if role.is_empty() {
+                                role = state.default_role;
+                            }
                             let res_user = ResponseUser {
                                 id: u.id,
                                 email: u.email,
-                                role: u.role,
+                                role,
                                 token,
                             };
 
@@ -140,7 +141,12 @@ pub async fn middleware<T>(
     };
 
     if let Some(current_user) = authorize_current_user(state.clone(), auth_header).await {
-        if state.curr_role.contains(&current_user.role) {
+        let mut role = current_user.role;
+        if role.is_empty() {
+            role = state.default_role;
+        }
+
+        if state.curr_role.contains(&role) {
             Ok(next.run(req).await)
         } else {
             Err(StatusCode::UNAUTHORIZED)

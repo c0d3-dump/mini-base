@@ -41,4 +41,5 @@ pub struct TokenUser {
 pub struct AuthState {
     pub dbconn: Conn,
     pub curr_role: Vec<String>,
+    pub default_role: String,
 }

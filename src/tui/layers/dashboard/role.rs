@@ -1,7 +1,8 @@
 use cursive::{
+    direction::Orientation,
     view::{Nameable, Resizable},
-    views::{Dialog, EditView, ListView, NamedView, ResizedView},
-    Cursive,
+    views::{Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView},
+    Cursive, With,
 };
 
 use crate::tui::{
@@ -33,11 +34,28 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 
 fn edit_role(s: &mut Cursive, idx: usize) {
     let role = get_current_model(s).rolelist.get(idx).unwrap().to_owned();
+    let default_role = get_current_model(s).default_role;
 
     let mut list = ListView::new();
     list.add_child(
         "label",
-        EditView::new().content(role).with_name("edit_label"),
+        EditView::new()
+            .content(role.clone())
+            .with_name("edit_label"),
+    );
+
+    let mut boolean_group: RadioGroup<bool> = RadioGroup::new();
+    list.add_child(
+        "default role",
+        LinearLayout::new(Orientation::Horizontal)
+            .child(boolean_group.button(false, "False"))
+            .child(
+                boolean_group
+                    .button(true, "True")
+                    .with_if(default_role == role, |b| {
+                        b.select();
+                    }),
+            ),
     );
 
     let on_submit = move |s: &mut Cursive| {
@@ -47,7 +65,12 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             .to_string();
 
         let model = get_current_mut_model(s);
-        model.rolelist[idx] = label;
+        model.rolelist[idx] = label.clone();
+        if *boolean_group.selection() == true {
+            model.default_role = label.clone();
+        } else if model.default_role == label {
+            model.default_role = "".to_string();
+        }
 
         update_role_with_model(s);
 
