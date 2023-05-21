@@ -80,6 +80,18 @@ fn update_logs(s: &mut Cursive) {
 
     let mut logs = get_data_from_refname::<ListView>(s, "server_logs");
     logs.clear();
+    logs.add_child(
+        "/auth/login",
+        TextView::new("Auth").align(Align::center_right()),
+    );
+    logs.add_child(
+        "/auth/signup",
+        TextView::new("Auth").align(Align::center_right()),
+    );
+    logs.add_child(
+        "/auth/logout",
+        TextView::new("Auth").align(Align::center_right()),
+    );
     for q in model.querylist {
         logs.add_child(
             format!("/api/{}", q.label),
