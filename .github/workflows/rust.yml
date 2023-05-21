@@ -11,10 +11,20 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: setup rust
+        uses: brndnmtthws/rust-action-rustup@v1
+        with:
+          self-update: 'true'
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: mini-base-linux-64
+          path: mini-base
