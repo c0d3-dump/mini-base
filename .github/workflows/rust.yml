@@ -22,9 +22,12 @@ jobs:
         uses: brndnmtthws/rust-action-rustup@v1
         with:
           self-update: 'true'
+        
+      - name: build
+        run: cargo build --release
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
           name: mini-base-linux-64
-          path: mini-base
+          path: ./target/release/mini-base
