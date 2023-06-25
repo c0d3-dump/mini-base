@@ -1,8 +1,5 @@
 use axum::{
-    http::{
-        header::{ACCEPT, AUTHORIZATION},
-        Method, StatusCode,
-    },
+    http::{Method, StatusCode},
     middleware,
     routing::{get, post},
     Router,
@@ -31,11 +28,11 @@ pub async fn start_server(model: Model, handle: Handle) {
         .layer(
             CorsLayer::new()
                 .allow_origin(Any)
-                .allow_methods([Method::POST])
-                .allow_headers([AUTHORIZATION, ACCEPT]),
+                .allow_methods([Method::POST, Method::OPTIONS])
+                .allow_headers(Any),
         );
 
-    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], 3456));
 
     axum_server::bind(addr)
         .handle(handle)
