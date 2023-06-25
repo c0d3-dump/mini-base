@@ -1,5 +1,6 @@
 use std::{collections::HashMap, fs::File};
 
+use chrono::{DateTime, Local, NaiveTime};
 use sqlx::{
     sqlite::{SqlitePool, SqlitePoolOptions, SqliteRow},
     Column, Row, TypeInfo,
@@ -68,11 +69,13 @@ impl Sqlite {
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::Real(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
-                ColType::UnsignedInteger(_) => panic!("wrong type"),
-                ColType::Array(_) => todo!(),
-                ColType::Object(_) => todo!(),
+                ColType::Date(t) => q.bind(t),
+                ColType::Time(t) => q.bind(t),
+                ColType::Datetime(t) => q.bind(t),
+                _ => panic!("wrong type"),
             };
         }
 
@@ -90,11 +93,13 @@ impl Sqlite {
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::Real(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
-                ColType::UnsignedInteger(_) => panic!("wrong type"),
-                ColType::Array(_) => todo!(),
-                ColType::Object(_) => todo!(),
+                ColType::Date(t) => q.bind(t),
+                ColType::Time(t) => q.bind(t),
+                ColType::Datetime(t) => q.bind(t),
+                _ => panic!("wrong type"),
             };
         }
 
@@ -112,6 +117,8 @@ impl Sqlite {
         let mut table_data = vec![];
 
         for row in rows {
+            dbg!(&row.columns());
+
             let mut map: HashMap<String, ColType> = HashMap::new();
 
             for i in 0..row.len() {
@@ -123,6 +130,26 @@ impl Sqlite {
                     "INTEGER" => {
                         let t = row.get::<Option<i64>, _>(i);
                         ColType::Integer(t)
+                    }
+                    "REAL" | "NUMERIC" => {
+                        let t = row.get::<Option<f64>, _>(i);
+                        ColType::Real(t)
+                    }
+                    "BOOLEAN" => {
+                        let t = row.get::<Option<bool>, _>(i);
+                        ColType::Bool(t)
+                    }
+                    "DATETIME" => {
+                        let t = row.get::<Option<DateTime<Local>>, _>(i);
+                        ColType::Datetime(t)
+                    }
+                    "DATE" => {
+                        let t = row.get::<Option<DateTime<Local>>, _>(i);
+                        ColType::Date(t)
+                    }
+                    "TIME" => {
+                        let t = row.get::<Option<NaiveTime>, _>(i);
+                        ColType::Time(t)
                     }
                     _ => panic!("wrong type found!"),
                 };

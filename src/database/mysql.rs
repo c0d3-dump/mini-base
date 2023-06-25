@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
+use chrono::{DateTime, Local, NaiveTime};
 use sqlx::{
     mysql::{MySqlPool, MySqlPoolOptions, MySqlRow},
+    types::Json,
     Column, Row, TypeInfo,
 };
 
@@ -23,7 +25,7 @@ impl Mysql {
                 let query = "
                 CREATE TABLE
                     IF NOT EXISTS users(
-                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
                         email VARCHAR(100) UNIQUE NOT NULL,
                         password VARCHAR(255) NOT NULL,
                         role VARCHAR(20)
@@ -55,11 +57,14 @@ impl Mysql {
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::Real(t) => q.bind(t),
                 ColType::UnsignedInteger(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
-                ColType::Array(_) => todo!(),
-                ColType::Object(_) => todo!(),
+                ColType::Date(t) => q.bind(t),
+                ColType::Time(t) => q.bind(t),
+                ColType::Datetime(t) => q.bind(t),
+                _ => panic!("wrong type"),
             };
         }
 
@@ -77,11 +82,14 @@ impl Mysql {
         for arg in args {
             q = match arg {
                 ColType::Integer(t) => q.bind(t),
+                ColType::Real(t) => q.bind(t),
                 ColType::UnsignedInteger(t) => q.bind(t),
                 ColType::String(t) => q.bind(t),
                 ColType::Bool(t) => q.bind(t),
-                ColType::Array(_) => todo!(),
-                ColType::Object(_) => todo!(),
+                ColType::Time(t) => q.bind(t),
+                ColType::Datetime(t) => q.bind(t),
+                ColType::Json(t) => q.bind(t),
+                _ => panic!("wrong type"),
             };
         }
 
@@ -103,17 +111,39 @@ impl Mysql {
 
             for i in 0..row.len() {
                 let row_value = match row.column(i).type_info().name() {
-                    "TEXT" | "VARCHAR" => {
+                    "TEXT" | "VARCHAR" | "ENUM" | "TINYTEXT" | "CHAR" => {
                         let t = row.get::<Option<String>, _>(i);
                         ColType::String(t)
                     }
-                    "INTEGER" | "INT" | "BIGINT" => {
+                    "INTEGER" | "INT" | "BIGINT" | "TINYINT" | "SMALLINT" | "MEDIUMINT"
+                    | "DECIMAL" => {
                         let t = row.get::<Option<i64>, _>(i);
                         ColType::Integer(t)
                     }
-                    "BIGINT UNSIGNED" => {
+                    "BIGINT UNSIGNED" | "TINYINT UNSIGNED" | "SMALLINT UNSIGNED"
+                    | "INT UNSIGNED" | "MEDIUMINT UNSIGNED" | "TIMESTAMP" => {
                         let t = row.get::<Option<u64>, _>(i);
                         ColType::UnsignedInteger(t)
+                    }
+                    "FLOAT" | "DOUBLE" => {
+                        let t = row.get::<Option<f64>, _>(i);
+                        ColType::Real(t)
+                    }
+                    "BOOLEAN" => {
+                        let t = row.get::<Option<bool>, _>(i);
+                        ColType::Bool(t)
+                    }
+                    "DATETIME" => {
+                        let t = row.get::<Option<DateTime<Local>>, _>(i);
+                        ColType::Datetime(t)
+                    }
+                    "TIME" => {
+                        let t = row.get::<Option<NaiveTime>, _>(i);
+                        ColType::Time(t)
+                    }
+                    "JSON" => {
+                        let t = row.get::<Option<Json<HashMap<String, ColType>>>, _>(i);
+                        ColType::Json(t)
                     }
                     _ => panic!("wrong type found!"),
                 };

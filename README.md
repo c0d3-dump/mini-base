@@ -1,4 +1,4 @@
-## Crates to be used
+## Crates used for this project
 
 * sqlx - database
 * axum - web framework
