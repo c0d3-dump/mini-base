@@ -11,7 +11,7 @@ use super::model::ColType;
 #[derive(Debug, Clone, Default)]
 pub struct Sqlite {
     pub connection: Option<SqlitePool>,
-    pub err: Option<(String, String)>,
+    pub err: Option<String>,
 }
 
 impl Sqlite {
@@ -22,7 +22,7 @@ impl Sqlite {
                 Err(_) => {
                     return Self {
                         connection: None,
-                        err: Some(("1".to_string(), "Error creating file".to_string())),
+                        err: Some("Error creating file".to_string()),
                     };
                 }
                 _ => {}
@@ -44,22 +44,27 @@ impl Sqlite {
                         );";
 
                 let q = sqlx::query(query);
-                let _ = q.execute(&connection).await.unwrap();
-
-                Self {
-                    connection: Some(connection),
-                    err: None,
+                match q.execute(&connection).await {
+                    Ok(_) => Self {
+                        connection: Some(connection),
+                        err: None,
+                    },
+                    Err(e) => Self {
+                        connection: None,
+                        err: Some(e.as_database_error().unwrap().message().to_string()),
+                    },
                 }
             }
-            Err(err) => {
-                let code = err.as_database_error().unwrap().code().unwrap().to_string();
-                let msg = err.as_database_error().unwrap().message().to_string();
-
-                Self {
+            Err(err) => match err.as_database_error() {
+                Some(msg) => Self {
                     connection: None,
-                    err: Some((code, msg)),
-                }
-            }
+                    err: Some(msg.message().to_string()),
+                },
+                None => Self {
+                    connection: None,
+                    err: Some("something went wrong!".to_string()),
+                },
+            },
         }
     }
 
@@ -117,8 +122,6 @@ impl Sqlite {
         let mut table_data = vec![];
 
         for row in rows {
-            dbg!(&row.columns());
-
             let mut map: HashMap<String, ColType> = HashMap::new();
 
             for i in 0..row.len() {

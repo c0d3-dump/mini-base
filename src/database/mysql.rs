@@ -12,7 +12,7 @@ use super::model::ColType;
 #[derive(Debug, Clone, Default)]
 pub struct Mysql {
     pub connection: Option<MySqlPool>,
-    pub err: Option<(String, String)>,
+    pub err: Option<String>,
 }
 
 impl Mysql {
@@ -32,22 +32,27 @@ impl Mysql {
                     );";
 
                 let q = sqlx::query(query);
-                let _ = q.execute(&connection).await.unwrap();
-
-                Self {
-                    connection: Some(connection),
-                    err: None,
+                match q.execute(&connection).await {
+                    Ok(_) => Self {
+                        connection: Some(connection),
+                        err: None,
+                    },
+                    Err(e) => Self {
+                        connection: None,
+                        err: Some(e.as_database_error().unwrap().message().to_string()),
+                    },
                 }
             }
-            Err(err) => {
-                let code = err.as_database_error().unwrap().code().unwrap().to_string();
-                let msg = err.as_database_error().unwrap().message().to_string();
-
-                Self {
+            Err(err) => match err.as_database_error() {
+                Some(msg) => Self {
                     connection: None,
-                    err: Some((code, msg)),
-                }
-            }
+                    err: Some(msg.message().to_string()),
+                },
+                None => Self {
+                    connection: None,
+                    err: Some("something went wrong!".to_string()),
+                },
+            },
         }
     }
 

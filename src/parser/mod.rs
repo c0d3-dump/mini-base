@@ -29,6 +29,8 @@ fn parse_special_character(input: &str) -> IResult<&str, &str> {
         tag("<"),
         tag(">="),
         tag("<="),
+        tag("_"),
+        tag("-"),
     ))(input)
 }
 

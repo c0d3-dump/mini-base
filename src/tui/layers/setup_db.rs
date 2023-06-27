@@ -60,17 +60,41 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         };
 
         let (dbpath, conn) = conn;
-        s.with_user_data(|m: &mut Model| {
-            m.db = Db::SQLITE { dbpath };
-            m.conn = conn;
-        });
+        match &conn {
+            Conn::SQLITE(c) => match &c.err {
+                Some(err) => s.add_layer(Dialog::info(err)),
+                None => {
+                    s.with_user_data(|m: &mut Model| {
+                        m.db = Db::SQLITE { dbpath };
+                        m.conn = conn;
+                    });
 
-        let model = get_current_model(s);
-        jsondb::to_json(model);
+                    let model = get_current_model(s);
+                    jsondb::to_json(model);
 
-        s.pop_layer();
-        s.pop_layer();
-        dashboard::display_dashboard(s);
+                    s.pop_layer();
+                    s.pop_layer();
+                    dashboard::display_dashboard(s);
+                }
+            },
+            Conn::MYSQL(c) => match &c.err {
+                Some(err) => s.add_layer(Dialog::info(err)),
+                None => {
+                    s.with_user_data(|m: &mut Model| {
+                        m.db = Db::MYSQL { dbpath };
+                        m.conn = conn;
+                    });
+
+                    let model = get_current_model(s);
+                    jsondb::to_json(model);
+
+                    s.pop_layer();
+                    s.pop_layer();
+                    dashboard::display_dashboard(s);
+                }
+            },
+            Conn::None => panic!(),
+        }
     };
     let on_cancel = |s: &mut Cursive| {
         s.pop_layer();
