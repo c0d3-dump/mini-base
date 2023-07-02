@@ -31,6 +31,13 @@ fn parse_special_character(input: &str) -> IResult<&str, &str> {
         tag("<="),
         tag("_"),
         tag("-"),
+        tag(","),
+        tag("."),
+        tag(";"),
+        tag("["),
+        tag("]"),
+        tag("{"),
+        tag("}"),
     ))(input)
 }
 
@@ -56,4 +63,47 @@ pub fn replace_variables_in_query(input: &str, variables: Vec<&str>) -> String {
         out = out.replace::<&str>(from.as_ref(), "?");
     });
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::{parse_query, replace_variables_in_query};
+
+    #[test]
+    fn test() {
+        assert_eq!(
+            parse_query("SELECT * FROM todos where user_id=${userId};"),
+            Ok(("", vec!["userId"]))
+        )
+    }
+
+    #[test]
+    fn test2() {
+        let query = "SELECT * FROM todos where user_id=${userId};";
+        let (_, parmas) = parse_query(query).unwrap();
+
+        assert_eq!(
+            replace_variables_in_query(query, parmas),
+            String::from("SELECT * FROM todos where user_id=?;")
+        )
+    }
+
+    #[test]
+    fn test3() {
+        assert_eq!(
+            parse_query("INSERT INTO todos VALUES (${title}, ${isCompleted});"),
+            Ok(("", vec!["title", "isCompleted"]))
+        )
+    }
+
+    #[test]
+    fn test4() {
+        let query = "INSERT INTO todos VALUES (${title}, ${isCompleted});";
+        let (_, parmas) = parse_query(query).unwrap();
+
+        assert_eq!(
+            replace_variables_in_query(query, parmas),
+            String::from("INSERT INTO todos VALUES (?, ?);")
+        )
+    }
 }

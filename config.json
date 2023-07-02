@@ -1,1 +1,0 @@
-{"rolelist":["user","admin"],"default_role":"user","querylist":[{"label":"test","exec_type":"QUERY","role_access":["user"],"query":"SELECT * FROM users;"}]}
