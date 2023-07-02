@@ -106,7 +106,47 @@ async fn login(State(state): State<AuthState>, body: String) -> (StatusCode, Str
                     Err(_) => (StatusCode::BAD_REQUEST, "Something went wrong".to_string()),
                 }
             }
-            Conn::MYSQL(_) => todo!(),
+            Conn::MYSQL(c) => {
+                let query = "SELECT * FROM users WHERE email = ?";
+
+                let conn = match c.clone().connection {
+                    Some(conn) => conn,
+                    None => panic!("database not connected"),
+                };
+
+                let r_out: Result<User, sqlx::Error> = sqlx::query_as(query)
+                    .bind(user.email)
+                    .fetch_one(&conn)
+                    .await;
+
+                match r_out {
+                    Ok(u) => {
+                        let hashed_password = hash_password(user.password);
+
+                        if hashed_password != u.password {
+                            (
+                                StatusCode::UNAUTHORIZED,
+                                "Enter valid email and password".to_string(),
+                            )
+                        } else {
+                            let token = generate_token(u.clone()).unwrap();
+                            let mut role = u.role;
+                            if role.is_empty() {
+                                role = state.default_role;
+                            }
+                            let res_user = ResponseUser {
+                                id: u.id,
+                                email: u.email,
+                                role,
+                                token,
+                            };
+
+                            (StatusCode::OK, serde_json::to_string(&res_user).unwrap())
+                        }
+                    }
+                    Err(_) => (StatusCode::BAD_REQUEST, "Something went wrong".to_string()),
+                }
+            }
             Conn::None => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "database not connected".to_string(),
@@ -121,11 +161,11 @@ async fn logout() -> (StatusCode, String) {
 }
 
 pub async fn middleware<T>(
-    State(state): State<AuthState>,
-    req: Request<T>,
+    State(auth_state): State<AuthState>,
+    mut req: Request<T>,
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
-    if state.curr_role.is_empty() {
+    if auth_state.curr_role.is_empty() {
         return Ok(next.run(req).await);
     }
 
@@ -140,13 +180,14 @@ pub async fn middleware<T>(
         return Err(StatusCode::UNAUTHORIZED);
     };
 
-    if let Some(current_user) = authorize_current_user(state.clone(), auth_header).await {
-        let mut role = current_user.role;
+    if let Some(current_user) = authorize_current_user(auth_state.clone(), auth_header).await {
+        let mut role = current_user.role.clone();
         if role.is_empty() {
-            role = state.default_role;
+            role = auth_state.default_role;
         }
 
-        if state.curr_role.contains(&role) {
+        if auth_state.curr_role.contains(&role) {
+            req.extensions_mut().insert(current_user);
             Ok(next.run(req).await)
         } else {
             Err(StatusCode::UNAUTHORIZED)

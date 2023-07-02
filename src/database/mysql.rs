@@ -78,7 +78,10 @@ impl Mysql {
             None => panic!("query all: error while getting connection string"),
         };
 
-        q.fetch_all(conn).await.unwrap()
+        match q.fetch_all(conn).await {
+            Ok(out) => out,
+            Err(_) => vec![],
+        }
     }
 
     pub async fn execute(&self, query: &str, args: Vec<ColType>) -> u64 {
@@ -100,12 +103,13 @@ impl Mysql {
 
         let conn = match &self.connection {
             Some(conn) => conn,
-            None => panic!("query all: error while getting connection string"),
+            None => panic!("execute: error while getting connection string"),
         };
 
-        let out = q.execute(conn).await.unwrap();
-
-        out.rows_affected()
+        match q.execute(conn).await {
+            Ok(out) => out.rows_affected(),
+            Err(_) => 0,
+        }
     }
 
     pub fn parse_all(&self, rows: Vec<MySqlRow>) -> Vec<HashMap<String, ColType>> {

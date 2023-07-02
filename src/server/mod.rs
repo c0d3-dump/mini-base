@@ -2,11 +2,11 @@ use axum::{
     http::{Method, StatusCode},
     middleware,
     routing::{get, post},
-    Router,
+    Extension, Router,
 };
 use axum_server::Handle;
 use serde_json::Value;
-use std::net::SocketAddr;
+use std::{collections::HashMap, net::SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
@@ -66,9 +66,18 @@ fn generate_routes(model: Model) -> Router {
 
         router = router.route(
             &path,
-            post(move |body: String| {
-                handler(body, parsed_query, parsed_params, dbconn, query.exec_type)
-            })
+            post(
+                move |Extension(user): Extension<model::User>, body: String| {
+                    handler(
+                        body,
+                        parsed_query,
+                        parsed_params,
+                        user,
+                        dbconn,
+                        query.exec_type,
+                    )
+                },
+            )
             .route_layer(middleware::from_fn_with_state(authstate, auth::middleware)),
         );
     }
@@ -80,6 +89,7 @@ async fn handler(
     body: String,
     query: String,
     params: Vec<String>,
+    user: model::User,
     dbconn: Conn,
     exectype: ExecType,
 ) -> (StatusCode, String) {
@@ -91,13 +101,36 @@ async fn handler(
                 let args = params
                     .clone()
                     .into_iter()
-                    .map(|p| match json[p].clone() {
-                        Value::Bool(t) => ColType::Bool(Some(t)),
-                        Value::Number(t) => ColType::Integer(t.as_i64()),
-                        Value::String(t) => ColType::String(Some(t)),
-                        Value::Array(_) => todo!(),
-                        Value::Object(_) => todo!(),
-                        Value::Null => ColType::Bool(None),
+                    .filter_map(|p| {
+                        if p.starts_with(".") {
+                            let map = HashMap::from([
+                                (String::from(".userId"), ColType::Integer(Some(user.id))),
+                                (
+                                    String::from(".userEmail"),
+                                    ColType::String(Some(user.email.clone())),
+                                ),
+                                (
+                                    String::from(".userRole"),
+                                    ColType::String(Some(user.role.clone())),
+                                ),
+                            ]);
+                            match map.get(&p) {
+                                Some(m) => Some(m.clone()),
+                                None => None,
+                            }
+                        } else {
+                            match json.get(p).clone() {
+                                Some(p) => Some(match p.clone() {
+                                    Value::Bool(t) => ColType::Bool(Some(t)),
+                                    Value::Number(t) => ColType::Integer(t.as_i64()),
+                                    Value::String(t) => ColType::String(Some(t)),
+                                    Value::Array(_) => todo!(),
+                                    Value::Object(_) => todo!(),
+                                    Value::Null => ColType::Bool(None),
+                                }),
+                                None => None,
+                            }
+                        }
                     })
                     .collect::<Vec<ColType>>();
 
