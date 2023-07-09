@@ -6,27 +6,19 @@
 
 ***
 
+![mini-base server](./examples/todo/screenshots/server.png)
+
+
 ### how to run on linux
 
 - downlaod linux binary from [release](https://github.com/c0d3-dump/mini-base/releases) section
 - run binary using `./mini-base-linux-64` in terminal
 
-### how to build for your system
-
-#### make sure you have rust installed
+### how to build for your system (make sure you have rust installed)
 
 ```bash
 cargo run
 ```
-
-## Crates used for this project
-
-* sqlx - database
-* axum - web framework
-* cursive - tui library
-* jsonwebtoken - authentication
-* sha2 - password hashing
-
 
 ## todos:
 
@@ -35,6 +27,14 @@ cargo run
 - [x] : support for sqlite and mysql databases
 - [x] : query parsing using nom parser
 - [x] : role based authentication using jwt
-- [ ] : some examples to play with
+- [x] : some examples to play with
 - [ ] : file upload support
 - [ ] : suggest new ideas
+
+## Crates used for this project
+
+* sqlx - database
+* axum - web framework
+* cursive - tui library
+* jsonwebtoken - authentication
+* sha2 - password hashing
