@@ -1,7 +1,7 @@
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
-    views::{Dialog, LinearLayout, NamedView, RadioGroup, ResizedView},
+    views::{Dialog, EditView, LinearLayout, NamedView, PaddedView, RadioGroup, ResizedView},
     Cursive, With,
 };
 
@@ -11,12 +11,14 @@ use crate::{
     tui::{
         components::{self, selector::update_select_component_with_ids},
         model::{Conn, Sidebar},
-        utils::get_current_model,
+        utils::{self, get_current_model, get_current_mut_model},
     },
 };
 
 pub fn auth_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
-    let users = get_all_users(s);
+    let mut layout = LinearLayout::new(Orientation::Vertical);
+
+    let users = get_all_users(s, "", 0);
 
     let users_name = users
         .clone()
@@ -29,7 +31,64 @@ pub fn auth_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     };
 
     let on_refresh = |s: &mut Cursive| {
-        let users = &get_all_users(s);
+        let users = &get_all_users(s, "", 0);
+        let users_name = users
+            .clone()
+            .into_iter()
+            .map(|u| u.email)
+            .collect::<Vec<String>>();
+
+        let users_ids: Vec<usize> = users
+            .clone()
+            .into_iter()
+            .map(|u| u.id as usize)
+            .collect::<Vec<usize>>();
+
+        update_select_component_with_ids(s, "user_list", users_name, users_ids);
+    };
+
+    let on_previous = |s: &mut Cursive| {
+        {
+            let model = get_current_mut_model(s);
+            if model.offset > 25 {
+                model.offset = model.offset - 25;
+            } else {
+                model.offset = 0;
+            }
+        }
+
+        let text = utils::get_data_from_refname::<EditView>(s, "searchUser")
+            .get_content()
+            .to_string();
+
+        let model = get_current_model(s);
+        let users = &get_all_users(s, &text, model.offset);
+        let users_name = users
+            .clone()
+            .into_iter()
+            .map(|u| u.email)
+            .collect::<Vec<String>>();
+
+        let users_ids: Vec<usize> = users
+            .clone()
+            .into_iter()
+            .map(|u| u.id as usize)
+            .collect::<Vec<usize>>();
+
+        update_select_component_with_ids(s, "user_list", users_name, users_ids);
+    };
+
+    let on_next = |s: &mut Cursive| {
+        {
+            let model = get_current_mut_model(s);
+            model.offset = model.offset + 25;
+        }
+        let text = utils::get_data_from_refname::<EditView>(s, "searchUser")
+            .get_content()
+            .to_string();
+
+        let model = get_current_model(s);
+        let users = &get_all_users(s, &text, model.offset);
         let users_name = users
             .clone()
             .into_iter()
@@ -50,28 +109,58 @@ pub fn auth_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .map(|u| u.id as usize)
         .collect::<Vec<usize>>();
 
-    let user_list = components::selector::select_component_with_ids(
+    layout.add_child(PaddedView::lrtb(
+        1,
+        1,
+        0,
+        1,
+        EditView::new()
+            .on_submit(|s, text| {
+                let users = &get_all_users(s, text, 0);
+                let users_name = users
+                    .clone()
+                    .into_iter()
+                    .map(|u| u.email)
+                    .collect::<Vec<String>>();
+
+                let users_ids: Vec<usize> = users
+                    .clone()
+                    .into_iter()
+                    .map(|u| u.id as usize)
+                    .collect::<Vec<usize>>();
+
+                update_select_component_with_ids(s, "user_list", users_name, users_ids);
+            })
+            .with_name("searchUser"),
+    ));
+
+    layout.add_child(components::selector::select_component_with_ids(
         users_name,
         users_ids,
         "user_list",
         on_select,
-    );
+    ));
 
     Dialog::new()
         .title("auth")
-        .content(user_list)
+        .content(layout)
         .button("refresh", on_refresh)
+        .button("previous", on_previous)
+        .button("next", on_next)
         .full_screen()
         .with_name(Sidebar::ROLE.to_string())
 }
 
 #[tokio::main]
-async fn get_all_users(s: &mut Cursive) -> Vec<User> {
+async fn get_all_users(s: &mut Cursive, text: &str, offset: usize) -> Vec<User> {
     let model = get_current_model(s);
 
     match &model.conn {
         Conn::SQLITE(c) => {
-            let query = "SELECT * FROM users";
+            let query = format!(
+                "SELECT * FROM users WHERE email LIKE '%{}%' LIMIT 25 OFFSET {}",
+                text, offset
+            );
 
             let conn = match c.clone().connection {
                 Some(conn) => conn,
@@ -79,7 +168,7 @@ async fn get_all_users(s: &mut Cursive) -> Vec<User> {
             };
 
             let r_out: Result<Vec<User>, sqlx::Error> =
-                sqlx::query_as(query).fetch_all(&conn).await;
+                sqlx::query_as(&query).fetch_all(&conn).await;
 
             match r_out {
                 Ok(u) => u,
@@ -87,7 +176,10 @@ async fn get_all_users(s: &mut Cursive) -> Vec<User> {
             }
         }
         Conn::MYSQL(c) => {
-            let query = "SELECT * FROM users";
+            let query = format!(
+                "SELECT * FROM users WHERE email LIKE '%{}%' LIMIT 25 OFFSET {}",
+                text, offset
+            );
 
             let conn = match c.clone().connection {
                 Some(conn) => conn,
@@ -95,7 +187,7 @@ async fn get_all_users(s: &mut Cursive) -> Vec<User> {
             };
 
             let r_out: Result<Vec<User>, sqlx::Error> =
-                sqlx::query_as(query).fetch_all(&conn).await;
+                sqlx::query_as(&query).fetch_all(&conn).await;
 
             match r_out {
                 Ok(u) => u,

@@ -23,7 +23,7 @@ pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let on_start_pressed = |s: &mut Cursive| {
         let model = get_current_model(s);
 
-        let mut handle_model = get_current_mut_model(s);
+        let handle_model = get_current_mut_model(s);
 
         match handle_model.clone().handle {
             Some(h) => h.graceful_shutdown(Some(Duration::from_secs(3))),

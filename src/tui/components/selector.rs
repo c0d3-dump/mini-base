@@ -41,7 +41,7 @@ where
         selectview.add_item(items.get(i).unwrap(), ids.get(i).unwrap().to_owned());
     }
 
-    selectview.on_submit(cb).with_name(refname)
+    selectview.on_submit(cb).with_name(refname).scrollable()
 }
 
 pub fn update_select_component_with_ids(

@@ -51,5 +51,6 @@ pub fn from_json() -> Model {
         rolelist: inter_model.rolelist,
         default_role: inter_model.default_role,
         querylist: inter_model.querylist,
+        offset: 0,
     }
 }
