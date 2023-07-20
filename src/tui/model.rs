@@ -14,7 +14,7 @@ pub struct Model {
     pub default_role: String,
     pub querylist: Vec<QueryList>,
     pub handle: Option<Handle>,
-    pub offset: usize,
+    pub offset: i64,
 }
 
 #[derive(Clone, Debug, Default)]
