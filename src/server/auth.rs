@@ -50,7 +50,18 @@ async fn signup(State(state): State<AuthState>, body: String) -> (StatusCode, St
                 c.execute(query, args).await;
                 (StatusCode::OK, "Signup successfully".to_string())
             }
-            Conn::MYSQL(_) => todo!(),
+            Conn::MYSQL(c) => {
+                let query = "INSERT INTO users(email, password) VALUES (?, ?)";
+
+                let hashed_password = hash_password(user.password);
+                let args = vec![
+                    ColType::String(Some(user.email)),
+                    ColType::String(Some(hashed_password)),
+                ];
+
+                c.execute(query, args).await;
+                (StatusCode::OK, "Signup successfully".to_string())
+            }
             Conn::None => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "database not connected".to_string(),
@@ -166,6 +177,8 @@ pub async fn middleware<T>(
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
     if auth_state.curr_role.is_empty() {
+        req.extensions_mut().insert(auth_state.dbconn);
+        req.extensions_mut().insert::<Option<User>>(None);
         return Ok(next.run(req).await);
     }
 
@@ -187,7 +200,8 @@ pub async fn middleware<T>(
         }
 
         if auth_state.curr_role.contains(&role) {
-            req.extensions_mut().insert(current_user);
+            req.extensions_mut().insert(auth_state.dbconn);
+            req.extensions_mut().insert(Some(current_user));
             Ok(next.run(req).await)
         } else {
             Err(StatusCode::UNAUTHORIZED)

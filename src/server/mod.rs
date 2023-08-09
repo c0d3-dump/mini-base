@@ -17,6 +17,7 @@ use crate::{
 
 mod auth;
 pub mod model;
+mod storage;
 mod utils;
 
 #[tokio::main]
@@ -24,6 +25,7 @@ pub async fn start_server(model: Model, handle: Handle) {
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
         .nest("/auth", auth::generate_auth_routes(model.clone()))
+        .nest("/storage", storage::generate_storage_routes(model.clone()))
         .nest("/api", generate_routes(model))
         .layer(
             CorsLayer::new()
@@ -67,12 +69,12 @@ fn generate_routes(model: Model) -> Router {
         router = router.route(
             &path,
             post(
-                move |Extension(user): Extension<model::User>, body: String| {
+                move |Extension(optional_user): Extension<Option<model::User>>, body: String| {
                     handler(
                         body,
                         parsed_query,
                         parsed_params,
-                        user,
+                        optional_user,
                         dbconn,
                         query.exec_type,
                     )
@@ -89,12 +91,14 @@ async fn handler(
     body: String,
     query: String,
     params: Vec<String>,
-    user: model::User,
+    optional_user: Option<model::User>,
     dbconn: Conn,
     exectype: ExecType,
 ) -> (StatusCode, String) {
     if !params.is_empty() {
-        let r_json: Result<Value, serde_json::Error> = serde_json::from_str(&body);
+        let mod_body = if body.is_empty() { "{}" } else { &body };
+
+        let r_json: Result<Value, serde_json::Error> = serde_json::from_str(mod_body);
 
         let res = match r_json {
             Ok(json) => {
@@ -102,20 +106,25 @@ async fn handler(
                     .clone()
                     .into_iter()
                     .filter_map(|p| {
-                        if p.starts_with(".") {
-                            let map = HashMap::from([
-                                (String::from(".userId"), ColType::Integer(Some(user.id))),
-                                (
-                                    String::from(".userEmail"),
-                                    ColType::String(Some(user.email.clone())),
-                                ),
-                                (
-                                    String::from(".userRole"),
-                                    ColType::String(Some(user.role.clone())),
-                                ),
-                            ]);
-                            match map.get(&p) {
-                                Some(m) => Some(m.clone()),
+                        if p.starts_with(".") && !optional_user.is_none() {
+                            match &optional_user {
+                                Some(user) => {
+                                    let map = HashMap::from([
+                                        (String::from(".userId"), ColType::Integer(Some(user.id))),
+                                        (
+                                            String::from(".userEmail"),
+                                            ColType::String(Some(user.email.clone())),
+                                        ),
+                                        (
+                                            String::from(".userRole"),
+                                            ColType::String(Some(user.role.clone())),
+                                        ),
+                                    ]);
+                                    match map.get(&p) {
+                                        Some(m) => Some(m.clone()),
+                                        None => None,
+                                    }
+                                }
                                 None => None,
                             }
                         } else {

@@ -63,7 +63,7 @@ pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let logs = ListView::new().with_name("server_logs");
     layout.add_child(
         Dialog::new()
-            .title("logs")
+            .title("apis")
             .content(logs.scrollable())
             .full_screen(),
     );
@@ -91,6 +91,14 @@ fn update_logs(s: &mut Cursive) {
     logs.add_child(
         "/auth/logout",
         TextView::new("Auth").align(Align::center_right()),
+    );
+    logs.add_child(
+        "/storage/upload",
+        TextView::new("Storage").align(Align::center_right()),
+    );
+    logs.add_child(
+        "/storage/delete",
+        TextView::new("Storage").align(Align::center_right()),
     );
     for q in model.querylist {
         logs.add_child(

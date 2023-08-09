@@ -29,6 +29,15 @@ impl Mysql {
                         email VARCHAR(100) UNIQUE NOT NULL,
                         password VARCHAR(255) NOT NULL,
                         role VARCHAR(20)
+                    );
+                
+                CREATE TABLE 
+                    IF NOT EXISTS storage(
+                        id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+                        filename VARCHAR(255) NOT NULL,
+                        uniquename VARCHAR(36) NOT NULL,
+                        uploaded_by INTEGER NOT NULL,
+                        FOREIGN KEY (uploaded_by) REFERENCES users(id)
                     );";
 
                 let q = sqlx::query(query);

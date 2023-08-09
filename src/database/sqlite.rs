@@ -41,6 +41,15 @@ impl Sqlite {
                             email VARCHAR(100) UNIQUE NOT NULL,
                             password VARCHAR(255) NOT NULL,
                             role VARCHAR(20)
+                        );
+                        
+                    CREATE TABLE 
+                        IF NOT EXISTS storage(
+                            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            file_name VARCHAR(255) NOT NULL,
+                            unique_name VARCHAR(36) NOT NULL,
+                            uploaded_by INTEGER NOT NULL,
+                            FOREIGN KEY (uploaded_by) REFERENCES users(id)
                         );";
 
                 let q = sqlx::query(query);

@@ -43,3 +43,16 @@ pub struct AuthState {
     pub curr_role: Vec<String>,
     pub default_role: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct storage {
+    pub id: i64,
+    pub filename: String,
+    pub uniquename: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UploadFileSchema {
+    pub file_name: String,
+    pub password: String,
+}

@@ -15,7 +15,7 @@ pub struct TokenClaims {
 pub fn generate_token(user: User) -> Result<String, jsonwebtoken::errors::Error> {
     let mut now = Utc::now();
     let iat = now.timestamp() as usize;
-    let exp_in = Duration::seconds(60);
+    let exp_in = Duration::hours(24);
     now += exp_in;
     let exp = now.timestamp() as usize;
 
