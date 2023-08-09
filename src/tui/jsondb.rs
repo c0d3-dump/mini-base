@@ -1,17 +1,19 @@
 use std::{
+    collections::HashMap,
     fs::{self, File},
     io::Write,
 };
 
 use serde::{Deserialize, Serialize};
 
-use super::model::{Conn, Db, Model, QueryList};
+use super::model::{Conn, Db, Model, QueryList, StorageAccess};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 struct IntermediateModel {
     pub rolelist: Vec<String>,
     pub default_role: String,
     pub querylist: Vec<QueryList>,
+    pub storage_access: HashMap<String, StorageAccess>,
 }
 
 pub fn to_json(model: Model) {
@@ -19,6 +21,7 @@ pub fn to_json(model: Model) {
         rolelist: model.rolelist,
         default_role: model.default_role,
         querylist: model.querylist,
+        storage_access: model.storage_access,
     };
     let data = serde_json::to_string(&inter_model).unwrap();
 
@@ -51,6 +54,7 @@ pub fn from_json() -> Model {
         rolelist: inter_model.rolelist,
         default_role: inter_model.default_role,
         querylist: inter_model.querylist,
+        storage_access: inter_model.storage_access,
         offset: 0,
     }
 }

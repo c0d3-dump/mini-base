@@ -7,7 +7,7 @@ use cursive::{
 
 use crate::tui::{
     components,
-    model::{Model, Sidebar},
+    model::{Model, Sidebar, StorageAccess},
     utils::{
         get_current_model, get_current_mut_model, get_data_from_refname, update_role_with_model,
     },
@@ -33,8 +33,14 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 }
 
 fn edit_role(s: &mut Cursive, idx: usize) {
-    let role = get_current_model(s).rolelist.get(idx).unwrap().to_owned();
-    let default_role = get_current_model(s).default_role;
+    let model = get_current_model(s);
+    let role = model.rolelist.get(idx).unwrap().to_owned();
+    let default_role = model.default_role;
+    let storagelist = model.storage_access.get(&role).unwrap_or(&StorageAccess {
+        delete: false,
+        read: false,
+        write: false,
+    });
 
     let mut list = ListView::new();
     list.add_child(
@@ -58,11 +64,31 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             ),
     );
 
+    let storage_list = vec![
+        ("Read".to_string(), storagelist.read),
+        ("Write".to_string(), storagelist.write),
+        ("Delete".to_string(), storagelist.delete),
+    ];
+
+    let check_box =
+        components::checkbox_group::checkbox_group_component("storage_access", storage_list);
+
+    list.add_child("storage access", check_box);
+
     let on_submit = move |s: &mut Cursive| {
         let label = s
             .call_on_name("edit_label", |view: &mut EditView| view.get_content())
             .unwrap()
             .to_string();
+
+        let storageaccess = components::checkbox_group::get_checked_data(
+            s,
+            vec![
+                "Read".to_string(),
+                "Write".to_string(),
+                "Delete".to_string(),
+            ],
+        );
 
         let model = get_current_mut_model(s);
         model.rolelist[idx] = label.clone();
@@ -71,6 +97,15 @@ fn edit_role(s: &mut Cursive, idx: usize) {
         } else if model.default_role == label {
             model.default_role = "".to_string();
         }
+
+        model.storage_access.insert(
+            role.to_string(),
+            StorageAccess {
+                read: storageaccess.contains(&"Read".to_string()),
+                write: storageaccess.contains(&"Write".to_string()),
+                delete: storageaccess.contains(&"Delete".to_string()),
+            },
+        );
 
         update_role_with_model(s);
 

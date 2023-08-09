@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 
 use axum_server::Handle;
@@ -13,6 +14,7 @@ pub struct Model {
     pub rolelist: Vec<String>,
     pub default_role: String,
     pub querylist: Vec<QueryList>,
+    pub storage_access: HashMap<String, StorageAccess>,
     pub handle: Option<Handle>,
     pub offset: i64,
 }
@@ -74,6 +76,13 @@ impl fmt::Display for DbType {
             DbType::MYSQL => write!(f, "MYSQL"),
         }
     }
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct StorageAccess {
+    pub read: bool,
+    pub write: bool,
+    pub delete: bool,
 }
 
 #[derive(Debug, Clone)]

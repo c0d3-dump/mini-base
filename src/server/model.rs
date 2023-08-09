@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
-use crate::tui::model::Conn;
+use crate::tui::model::{Conn, StorageAccess};
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct User {
@@ -44,15 +46,20 @@ pub struct AuthState {
     pub default_role: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct StorageState {
+    pub default_role: String,
+    pub storage_access: HashMap<String, StorageAccess>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct storage {
+pub struct Storage {
     pub id: i64,
     pub filename: String,
     pub uniquename: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct UploadFileSchema {
-    pub file_name: String,
-    pub password: String,
+pub struct DeleteFileSchema {
+    pub id: i64,
 }
