@@ -93,6 +93,34 @@ impl Mysql {
         }
     }
 
+    pub async fn query_one(&self, query: &str, args: Vec<ColType>) -> Option<MySqlRow> {
+        let mut q = sqlx::query(query);
+
+        for arg in args {
+            q = match arg {
+                ColType::Integer(t) => q.bind(t),
+                ColType::Real(t) => q.bind(t),
+                ColType::UnsignedInteger(t) => q.bind(t),
+                ColType::String(t) => q.bind(t),
+                ColType::Bool(t) => q.bind(t),
+                ColType::Date(t) => q.bind(t),
+                ColType::Time(t) => q.bind(t),
+                ColType::Datetime(t) => q.bind(t),
+                _ => panic!("wrong type"),
+            };
+        }
+
+        let conn = match &self.connection {
+            Some(conn) => conn,
+            None => panic!("query all: error while getting connection string"),
+        };
+
+        match q.fetch_one(conn).await {
+            Ok(out) => Some(out),
+            Err(_) => None,
+        }
+    }
+
     pub async fn execute(&self, query: &str, args: Vec<ColType>) -> u64 {
         let mut q = sqlx::query(query);
 

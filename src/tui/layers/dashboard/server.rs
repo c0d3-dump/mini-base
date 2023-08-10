@@ -93,6 +93,10 @@ fn update_logs(s: &mut Cursive) {
         TextView::new("Auth").align(Align::center_right()),
     );
     logs.add_child(
+        "/storage/get",
+        TextView::new("Storage").align(Align::center_right()),
+    );
+    logs.add_child(
         "/storage/upload",
         TextView::new("Storage").align(Align::center_right()),
     );

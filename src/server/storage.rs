@@ -11,6 +11,7 @@ use axum::{
 };
 use axum_extra::extract::{multipart::Field, Multipart};
 use futures::StreamExt;
+use sqlx::Row;
 use tokio::{fs, io::AsyncWriteExt};
 
 use super::{
@@ -61,6 +62,8 @@ async fn upload(
         );
     }
 
+    let mut ids = vec![];
+
     while let Some(field) = multipart.next_field().await.unwrap() {
         let filename = field.file_name().unwrap().to_string();
 
@@ -80,7 +83,7 @@ async fn upload(
         match &db_conn {
             Conn::SQLITE(c) => {
                 let query =
-                    "INSERT INTO storage(file_name, unique_name, uploaded_by) VALUES (?, ?, ?)";
+                    "INSERT INTO storage(file_name, unique_name, uploaded_by) VALUES (?, ?, ?) returning id";
 
                 let mut args = vec![
                     ColType::String(Some(filename)),
@@ -92,7 +95,19 @@ async fn upload(
                     None => todo!(),
                 }
 
-                c.execute(query, args).await;
+                let optional_row = c.query_one(query, args).await;
+                match optional_row {
+                    Some(row) => {
+                        let id = row.get::<Option<i64>, _>(0).unwrap();
+                        ids.push(id);
+                    }
+                    None => {
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "error saving file".to_string(),
+                        );
+                    }
+                }
             }
             Conn::MYSQL(c) => {
                 let query =
@@ -108,7 +123,19 @@ async fn upload(
                     None => todo!(),
                 }
 
-                c.execute(query, args).await;
+                let optional_row = c.query_one(query, args).await;
+                match optional_row {
+                    Some(row) => {
+                        let id = row.get::<Option<i64>, _>(0).unwrap();
+                        ids.push(id);
+                    }
+                    None => {
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "error saving file".to_string(),
+                        );
+                    }
+                }
             }
             Conn::None => {
                 return (
@@ -119,7 +146,13 @@ async fn upload(
         }
     }
 
-    (StatusCode::OK, "File uploaded successfully".to_string())
+    let ids_str = ids
+        .into_iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<String>>()
+        .join(", ");
+
+    (StatusCode::OK, ids_str)
 }
 
 async fn delete(
@@ -142,7 +175,7 @@ async fn delete(
     if optional_storage_access.is_none() || !optional_storage_access.unwrap().delete {
         return (
             StatusCode::UNAUTHORIZED,
-            "Unauthorized to upload file".to_string(),
+            "Unauthorized to delete file".to_string(),
         );
     }
 
@@ -152,6 +185,24 @@ async fn delete(
         Ok(file) => {
             match &db_conn {
                 Conn::SQLITE(c) => {
+                    let query = "SELECT unique_name FROM storage WHERE id=?";
+
+                    let args = vec![ColType::Integer(Some(file.id))];
+
+                    let optional_row = c.query_one(query, args).await;
+                    match optional_row {
+                        Some(row) => {
+                            let unique_name = row.get::<Option<String>, _>(0).unwrap();
+                            let _ = fs::remove_file(format!("uploads/{}", &unique_name)).await;
+                        }
+                        None => {
+                            return (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                "error deleting file".to_string(),
+                            );
+                        }
+                    }
+
                     let query = "DELETE FROM storage WHERE id=?";
 
                     let args = vec![ColType::Integer(Some(file.id))];
@@ -159,6 +210,24 @@ async fn delete(
                     c.execute(query, args).await;
                 }
                 Conn::MYSQL(c) => {
+                    let query = "SELECT unique_name FROM storage WHERE id=?";
+
+                    let args = vec![ColType::Integer(Some(file.id))];
+
+                    let optional_row = c.query_one(query, args).await;
+                    match optional_row {
+                        Some(row) => {
+                            let unique_name = row.get::<Option<String>, _>(0).unwrap();
+                            let _ = fs::remove_file(format!("uploads/{}", &unique_name)).await;
+                        }
+                        None => {
+                            return (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                "error deleting file".to_string(),
+                            );
+                        }
+                    }
+
                     let query = "DELETE FROM storage WHERE id=?";
 
                     let args = vec![ColType::Integer(Some(file.id))];
@@ -173,9 +242,7 @@ async fn delete(
                 }
             }
 
-            // fs::remove_file(file_path).await;
-
-            (StatusCode::OK, "File uploaded successfully".to_string())
+            (StatusCode::OK, "File deleted successfully".to_string())
         }
         Err(_) => (StatusCode::BAD_REQUEST, "insufficient params".to_string()),
     }
