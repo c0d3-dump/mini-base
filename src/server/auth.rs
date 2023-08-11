@@ -1,6 +1,6 @@
 use super::{
     model::AuthState,
-    utils::{decode_token, generate_token, hash_password},
+    utils::{decode_auth_token, generate_auth_token, hash_password},
 };
 use axum::{
     extract::State,
@@ -99,7 +99,7 @@ async fn login(State(state): State<AuthState>, body: String) -> (StatusCode, Str
                                 "Enter valid email and password".to_string(),
                             )
                         } else {
-                            let token = generate_token(u.clone()).unwrap();
+                            let token = generate_auth_token(u.clone()).unwrap();
                             let mut role = u.role;
                             if role.is_empty() {
                                 role = state.default_role;
@@ -140,7 +140,7 @@ async fn login(State(state): State<AuthState>, body: String) -> (StatusCode, Str
                                 "Enter valid email and password".to_string(),
                             )
                         } else {
-                            let token = generate_token(u.clone()).unwrap();
+                            let token = generate_auth_token(u.clone()).unwrap();
                             let mut role = u.role;
                             if role.is_empty() {
                                 role = state.default_role;
@@ -212,7 +212,7 @@ pub async fn middleware<T>(
 }
 
 async fn authorize_current_user(state: AuthState, auth_token: &str) -> Option<User> {
-    let token_claim = decode_token(auth_token);
+    let token_claim = decode_auth_token(auth_token);
 
     match token_claim {
         Ok(data) => {

@@ -63,3 +63,13 @@ pub struct Storage {
 pub struct DeleteFileSchema {
     pub id: i64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct GetFileSchema {
+    pub id: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TokenFile {
+    pub unique_name: String,
+}

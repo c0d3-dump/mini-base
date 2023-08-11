@@ -3,16 +3,23 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-use super::model::{TokenUser, User};
+use super::model::{TokenFile, TokenUser, User};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TokenClaims {
+pub struct AuthTokenClaims {
     pub user: TokenUser,
     pub iat: usize,
     pub exp: usize,
 }
 
-pub fn generate_token(user: User) -> Result<String, jsonwebtoken::errors::Error> {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct StorageTokenClaims {
+    pub file: TokenFile,
+    pub iat: usize,
+    pub exp: usize,
+}
+
+pub fn generate_auth_token(user: User) -> Result<String, jsonwebtoken::errors::Error> {
     let mut now = Utc::now();
     let iat = now.timestamp() as usize;
     let exp_in = Duration::hours(24);
@@ -25,7 +32,7 @@ pub fn generate_token(user: User) -> Result<String, jsonwebtoken::errors::Error>
         role: user.role,
     };
 
-    let claim = TokenClaims {
+    let claim = AuthTokenClaims {
         exp,
         iat,
         user: token_user,
@@ -38,8 +45,10 @@ pub fn generate_token(user: User) -> Result<String, jsonwebtoken::errors::Error>
     )
 }
 
-pub fn decode_token(token: &str) -> Result<TokenData<TokenClaims>, jsonwebtoken::errors::Error> {
-    decode::<TokenClaims>(
+pub fn decode_auth_token(
+    token: &str,
+) -> Result<TokenData<AuthTokenClaims>, jsonwebtoken::errors::Error> {
+    decode::<AuthTokenClaims>(
         token,
         &DecodingKey::from_secret("secret".as_ref()),
         &Validation::default(),
@@ -52,4 +61,36 @@ pub fn hash_password(password: String) -> String {
     let hash = hasher.finalize();
 
     format!("{:x}", hash)
+}
+
+pub fn generate_storage_token(
+    token_file: TokenFile,
+) -> Result<String, jsonwebtoken::errors::Error> {
+    let mut now = Utc::now();
+    let iat = now.timestamp() as usize;
+    let exp_in = Duration::minutes(2);
+    now += exp_in;
+    let exp = now.timestamp() as usize;
+
+    let claim = StorageTokenClaims {
+        exp,
+        iat,
+        file: token_file,
+    };
+
+    encode(
+        &Header::default(),
+        &claim,
+        &EncodingKey::from_secret("secret".as_ref()),
+    )
+}
+
+pub fn decode_storage_token(
+    token: &str,
+) -> Result<TokenData<StorageTokenClaims>, jsonwebtoken::errors::Error> {
+    decode::<StorageTokenClaims>(
+        token,
+        &DecodingKey::from_secret("secret".as_ref()),
+        &Validation::default(),
+    )
 }

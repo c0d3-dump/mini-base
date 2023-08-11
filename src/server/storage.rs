@@ -16,7 +16,8 @@ use tokio::{fs, io::AsyncWriteExt};
 
 use super::{
     auth::{self},
-    model::{self, AuthState, DeleteFileSchema, StorageState},
+    model::{self, AuthState, DeleteFileSchema, GetFileSchema, StorageState, TokenFile},
+    utils::generate_storage_token,
 };
 
 pub fn generate_storage_routes(model: Model) -> Router {
@@ -34,6 +35,7 @@ pub fn generate_storage_routes(model: Model) -> Router {
     Router::new()
         .route("/upload", post(upload))
         .route("/delete", post(delete))
+        .route("/get", post(get))
         .route_layer(middleware::from_fn_with_state(authstate, auth::middleware))
         .with_state(storagestate)
 }
@@ -244,6 +246,89 @@ async fn delete(
 
             (StatusCode::OK, "File deleted successfully".to_string())
         }
+        Err(_) => (StatusCode::BAD_REQUEST, "insufficient params".to_string()),
+    }
+}
+
+async fn get(
+    State(storage_state): State<StorageState>,
+    Extension(db_conn): Extension<Conn>,
+    Extension(optional_user): Extension<Option<model::User>>,
+    body: String,
+) -> (StatusCode, String) {
+    if optional_user.is_none() {
+        return (StatusCode::UNAUTHORIZED, "please login first".to_string());
+    }
+
+    let mut role = optional_user.clone().unwrap().role;
+    if role.is_empty() {
+        role = storage_state.default_role;
+    }
+
+    let optional_storage_access = storage_state.storage_access.get(&role);
+
+    if optional_storage_access.is_none() || !optional_storage_access.unwrap().read {
+        return (
+            StatusCode::UNAUTHORIZED,
+            "Unauthorized to read file".to_string(),
+        );
+    }
+
+    let r_json: Result<GetFileSchema, serde_json::Error> = serde_json::from_str(&body);
+
+    match r_json {
+        Ok(file) => match &db_conn {
+            Conn::SQLITE(c) => {
+                let query = "SELECT unique_name FROM storage WHERE id=?";
+
+                let args = vec![ColType::Integer(Some(file.id))];
+
+                let optional_row = c.query_one(query, args).await;
+                match optional_row {
+                    Some(row) => {
+                        let unique_name = row.get::<Option<String>, _>(0).unwrap();
+                        let token_file = TokenFile { unique_name };
+                        let token: String = generate_storage_token(token_file).unwrap();
+
+                        return (StatusCode::OK, token);
+                    }
+                    None => {
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "error fetching file".to_string(),
+                        );
+                    }
+                }
+            }
+            Conn::MYSQL(c) => {
+                let query = "SELECT unique_name FROM storage WHERE id=?";
+
+                let args = vec![ColType::Integer(Some(file.id))];
+
+                let optional_row = c.query_one(query, args).await;
+                match optional_row {
+                    Some(row) => {
+                        let unique_name = row.get::<Option<String>, _>(0).unwrap();
+                        let token_file = TokenFile { unique_name };
+                        let token: String = generate_storage_token(token_file).unwrap();
+
+                        return (StatusCode::OK, token);
+                    }
+                    None => {
+                        return (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            "error fetching file".to_string(),
+                        );
+                    }
+                }
+            }
+            Conn::None => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "error fetching file".to_string(),
+                );
+            }
+        },
         Err(_) => (StatusCode::BAD_REQUEST, "insufficient params".to_string()),
     }
 }
