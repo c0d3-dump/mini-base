@@ -28,7 +28,7 @@ cargo run
 - [x] : query parsing using nom parser
 - [x] : role based authentication using jwt
 - [x] : some examples to play with
-- [ ] : file upload support
+- [x] : file upload support with role based access
 - [ ] : suggest new ideas
 
 ## Crates used for this project
