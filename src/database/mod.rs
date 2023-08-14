@@ -28,16 +28,16 @@ impl DbRow {
         }
     }
 
-    fn get<'r, T>(self, idx: usize) -> Result<T, Error>
+    pub fn get<'r, T>(&'r self, idx: usize) -> Result<T, Error>
     where
-        T: Decode<'r, <SqliteRow as sqlx::Row>::Database>
-            + Type<<SqliteRow as sqlx::Row>::Database>
-            + Decode<'r, <MySqlRow as sqlx::Row>::Database>
-            + Type<<MySqlRow as sqlx::Row>::Database>,
+        T: Decode<'r, <SqliteRow as Row>::Database>
+            + Type<<SqliteRow as Row>::Database>
+            + Decode<'r, <MySqlRow as Row>::Database>
+            + Type<<MySqlRow as Row>::Database>,
     {
         match self {
-            DbRow::SQLITE(row) => row.try_get::<T, _>(idx),
-            DbRow::MYSQL(row) => row.try_get::<T, _>(idx),
+            DbRow::SQLITE(row) => row.try_get::<'r, T, _>(idx),
+            DbRow::MYSQL(row) => row.try_get::<'r, T, _>(idx),
         }
     }
 }
@@ -47,32 +47,49 @@ pub struct Conn {
     pub dbtype: DbType,
     pub sqlite: Option<sqlite::Sqlite>,
     pub mysql: Option<mysql::Mysql>,
+    pub err: Option<String>,
 }
 
 impl Conn {
-    #[tokio::main]
-    pub async fn new(dbtype: DbType, dbpath: &str) -> Self {
+    pub fn new(dbtype: DbType, dbpath: &str) -> Self {
         match dbtype {
             DbType::SQLITE => {
                 let sqlite_conn = sqlite::Sqlite::new(dbpath);
+                let sqlite = futures::executor::block_on(sqlite_conn);
+
                 Self {
                     dbtype,
-                    sqlite: Some(sqlite_conn),
+                    sqlite: Some(sqlite.clone()),
                     mysql: None,
+                    err: sqlite.connection.err(),
                 }
             }
             DbType::MYSQL => {
                 let mysql_conn = mysql::Mysql::new(dbpath);
+                let mysql = futures::executor::block_on(mysql_conn);
+
                 Self {
                     dbtype,
                     sqlite: None,
-                    mysql: Some(mysql_conn),
+                    mysql: Some(mysql.clone()),
+                    err: mysql.connection.err(),
                 }
             }
         }
     }
 
-    pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Result<Vec<DbRow>, Error> {
+    pub async fn close(&self) {
+        match self.dbtype {
+            DbType::SQLITE => {
+                self.sqlite.as_ref().unwrap().close().await;
+            }
+            DbType::MYSQL => {
+                self.mysql.as_ref().unwrap().close().await;
+            }
+        }
+    }
+
+    pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Result<Vec<DbRow>, String> {
         match self.dbtype {
             DbType::SQLITE => {
                 let res = self.sqlite.as_ref().unwrap().query_all(query, args).await;
@@ -91,7 +108,7 @@ impl Conn {
         }
     }
 
-    pub async fn query_one(&self, query: &str, args: Vec<ColType>) -> Result<DbRow, Error> {
+    pub async fn query_one(&self, query: &str, args: Vec<ColType>) -> Result<DbRow, String> {
         match self.dbtype {
             DbType::SQLITE => {
                 let res = self.sqlite.as_ref().unwrap().query_one(query, args).await;
@@ -110,14 +127,14 @@ impl Conn {
         }
     }
 
-    pub async fn execute(&self, query: &str, args: Vec<ColType>) -> Result<u64, Error> {
+    pub async fn execute(&self, query: &str, args: Vec<ColType>) -> Result<u64, String> {
         match self.dbtype {
             DbType::SQLITE => self.sqlite.as_ref().unwrap().execute(query, args).await,
             DbType::MYSQL => self.mysql.as_ref().unwrap().execute(query, args).await,
         }
     }
 
-    pub async fn query_all_with_type<T>(&self, query: &str) -> Result<Vec<T>, Error>
+    pub async fn query_all_with_type<T>(&self, query: &str) -> Result<Vec<T>, String>
     where
         T: for<'r> FromRow<'r, SqliteRow> + for<'r> FromRow<'r, MySqlRow> + Unpin + Send,
     {
@@ -139,7 +156,7 @@ impl Conn {
         }
     }
 
-    pub async fn query_one_with_type<T>(&self, query: &str) -> Result<T, Error>
+    pub async fn query_one_with_type<T>(&self, query: &str) -> Result<T, String>
     where
         T: for<'r> FromRow<'r, SqliteRow> + for<'r> FromRow<'r, MySqlRow> + Unpin + Send,
     {
@@ -161,7 +178,7 @@ impl Conn {
         }
     }
 
-    pub fn parse_all(&self, rows: Vec<DbRow>) -> Result<Vec<HashMap<String, ColType>>, Error> {
+    pub fn parse_all(&self, rows: Vec<DbRow>) -> Result<Vec<HashMap<String, ColType>>, String> {
         match self.dbtype {
             DbType::SQLITE => self
                 .sqlite

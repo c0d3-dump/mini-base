@@ -5,49 +5,73 @@ use cursive::{
     Cursive, With,
 };
 
-use crate::tui::{
-    components,
-    model::{Model, Sidebar, StorageAccess},
-    utils::{
-        get_current_model, get_current_mut_model, get_data_from_refname, update_role_with_model,
+use crate::{
+    queries::model::Role,
+    tui::{
+        components::{
+            self,
+            selector::{add_select_item, remove_select_item},
+        },
+        model::Sidebar,
+        utils::{get_current_model, get_current_mut_model, get_data_from_refname},
     },
 };
 
 pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
-    let model = get_current_model(s);
+    let mut model = get_current_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
         edit_role(s, *idx);
     };
 
-    let role_list = components::selector::select_component(model.rolelist, "role_list", on_select);
+    let optional_roles = futures::executor::block_on(model.get_all_roles());
 
-    let on_add_role = add_role;
+    let mut roles = vec![];
+
+    match optional_roles {
+        Ok(r) => {
+            roles = r;
+        }
+        Err(e) => s.add_layer(Dialog::info(e)),
+    }
+
+    let last_role = roles.iter().last().unwrap();
+    model.index.role = last_role.id;
+
+    let role_list = components::selector::select_component(
+        roles.into_iter().map(|r| (r.id as usize, r.name)).collect(),
+        "role_list",
+        on_select,
+    );
 
     Dialog::new()
         .title("role")
         .content(role_list)
-        .button("Add Role", on_add_role)
+        .button("Add Role", add_role)
         .full_screen()
         .with_name(Sidebar::ROLE.to_string())
 }
 
 fn edit_role(s: &mut Cursive, idx: usize) {
-    let model = get_current_model(s);
-    let role = model.rolelist.get(idx).unwrap().to_owned();
-    let default_role = model.default_role;
-    let storagelist = model.storage_access.get(&role).unwrap_or(&StorageAccess {
-        delete: false,
-        read: false,
-        write: false,
-    });
+    let model = get_current_mut_model(s);
+
+    let optional_role = futures::executor::block_on(model.get_role_by_id(idx as i64));
+    let role;
+
+    match optional_role {
+        Ok(r) => {
+            role = r;
+        }
+        Err(e) => {
+            s.add_layer(Dialog::info(e));
+            return;
+        }
+    }
 
     let mut list = ListView::new();
     list.add_child(
         "label",
-        EditView::new()
-            .content(role.clone())
-            .with_name("edit_label"),
+        EditView::new().content(role.name).with_name("edit_label"),
     );
 
     let mut boolean_group: RadioGroup<bool> = RadioGroup::new();
@@ -58,16 +82,16 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             .child(
                 boolean_group
                     .button(true, "True")
-                    .with_if(default_role == role, |b| {
+                    .with_if(role.is_default, |b| {
                         b.select();
                     }),
             ),
     );
 
     let storage_list = vec![
-        ("Read".to_string(), storagelist.read),
-        ("Write".to_string(), storagelist.write),
-        ("Delete".to_string(), storagelist.delete),
+        ("Read".to_string(), role.can_read),
+        ("Write".to_string(), role.can_write),
+        ("Delete".to_string(), role.can_delete),
     ];
 
     let check_box =
@@ -76,10 +100,8 @@ fn edit_role(s: &mut Cursive, idx: usize) {
     list.add_child("storage access", check_box);
 
     let on_submit = move |s: &mut Cursive| {
-        let label = s
-            .call_on_name("edit_label", |view: &mut EditView| view.get_content())
-            .unwrap()
-            .to_string();
+        let edit_ref = s.find_name::<EditView>("edit_label").unwrap();
+        let label = edit_ref.get_content().to_string();
 
         let storageaccess = components::checkbox_group::get_checked_data(
             s,
@@ -90,33 +112,43 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             ],
         );
 
+        let role = Role {
+            id: idx as i64,
+            name: label,
+            is_default: *boolean_group.selection(),
+            can_read: storageaccess[0],
+            can_write: storageaccess[1],
+            can_delete: storageaccess[2],
+        };
+
         let model = get_current_mut_model(s);
-        model.rolelist[idx] = label.clone();
-        if *boolean_group.selection() == true {
-            model.default_role = label.clone();
-        } else if model.default_role == label {
-            model.default_role = "".to_string();
-        }
+        let res = futures::executor::block_on(model.edit_role(role));
 
-        model.storage_access.insert(
-            role.to_string(),
-            StorageAccess {
-                read: storageaccess.contains(&"Read".to_string()),
-                write: storageaccess.contains(&"Write".to_string()),
-                delete: storageaccess.contains(&"Delete".to_string()),
-            },
-        );
-
-        update_role_with_model(s);
+        match res {
+            Ok(_) => {}
+            Err(e) => {
+                s.add_layer(Dialog::info(e));
+                return;
+            }
+        };
 
         s.pop_layer();
     };
 
     let on_delete = move |s: &mut Cursive| {
         let model = get_current_mut_model(s);
-        model.rolelist.remove(idx);
+        dbg!(idx);
+        let res = futures::executor::block_on(model.delete_role(idx as i64));
 
-        update_role_with_model(s);
+        match res {
+            Ok(_) => {}
+            Err(e) => {
+                s.add_layer(Dialog::info(e));
+                return;
+            }
+        };
+
+        remove_select_item(s, "role_list", idx);
 
         s.pop_layer();
     };
@@ -139,12 +171,28 @@ fn add_role(s: &mut Cursive) {
     let on_submit = |s: &mut Cursive| {
         let data = get_data_from_refname::<EditView>(s, "add_role_text");
 
-        s.with_user_data(|m: &mut Model| {
-            m.rolelist.push(data.get_content().to_string());
-        })
-        .unwrap();
+        let model = get_current_mut_model(s);
 
-        update_role_with_model(s);
+        let res = futures::executor::block_on(model.add_new_role(data.get_content().to_string()));
+
+        match res {
+            Ok(_) => {}
+            Err(e) => {
+                s.add_layer(Dialog::info(e));
+                return;
+            }
+        };
+
+        let model = get_current_mut_model(s);
+        let new_idx = model.index.role + 1;
+        model.index.role = new_idx;
+
+        add_select_item(
+            s,
+            "role_list",
+            data.get_content().to_string(),
+            new_idx as usize,
+        );
 
         s.pop_layer();
     };

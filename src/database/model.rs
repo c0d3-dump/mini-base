@@ -1,6 +1,8 @@
+use core::fmt;
 use std::collections::HashMap;
 
 use chrono::{DateTime, Local, NaiveTime};
+use enum_iterator::{all, Sequence};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 
@@ -28,49 +30,27 @@ pub struct ColInfo {
     pub pk: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Sequence)]
 pub enum DbType {
     #[default]
     SQLITE,
     MYSQL,
 }
 
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct Role {
-    pub id: i64,
-    pub name: String,
-    pub is_default: bool,
-    pub can_read: bool,
-    pub can_write: bool,
-    pub can_delete: bool,
+impl fmt::Display for DbType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DbType::SQLITE => write!(f, "SQLITE"),
+            DbType::MYSQL => write!(f, "MYSQL"),
+        }
+    }
 }
 
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct User {
-    pub id: i64,
-    pub email: String,
-    pub password: String,
-    pub role_id: Option<i64>,
-}
+#[test]
+fn enum_test() {
+    let enum_values = all::<DbType>()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
 
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct Storage {
-    pub id: i64,
-    pub file_name: String,
-    pub unique_name: String,
-    pub uploaded_by: i64,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct Query {
-    pub id: i64,
-    pub name: String,
-    pub exec_type: String,
-    pub query: Option<String>,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct RoleAccess {
-    pub role_id: i64,
-    pub query_id: i64,
+    println!("{:?}", enum_values);
 }

@@ -6,6 +6,7 @@ use cursive::{
     views::{Dialog, LinearLayout, NamedView, ResizedView, ScreensView},
     Cursive,
 };
+use enum_iterator::all;
 
 use crate::tui::{
     components,
@@ -13,48 +14,52 @@ use crate::tui::{
     utils::{self, get_current_mut_model},
 };
 
-pub mod auth;
-pub mod editor;
-pub mod query;
+// pub mod auth;
+// pub mod editor;
+// pub mod query;
 pub mod role;
-pub mod server;
+// pub mod server;
 
 pub fn display_dashboard(s: &mut Cursive) {
-    let sidebar_items = vec![
-        Sidebar::ROLE.to_string(),
-        Sidebar::AUTH.to_string(),
-        Sidebar::QUERY.to_string(),
-        Sidebar::EDITOR.to_string(),
-        Sidebar::SERVER.to_string(),
-        "Quit".to_string(), // 5
-    ];
+    let sidebar_items = all::<Sidebar>()
+        .enumerate()
+        .map(|(idx, item)| (idx, item.to_string()))
+        .collect::<Vec<(usize, String)>>();
 
     let on_select = |s: &mut Cursive, idx: &usize| {
-        if *idx == 5 {
-            let handle_model = get_current_mut_model(s);
+        let optional_sidebar = all::<Sidebar>()
+            .enumerate()
+            .filter(|(i, _)| i == idx)
+            .map(|(_, x)| x)
+            .next();
 
-            match handle_model.clone().handle {
-                Some(h) => h.graceful_shutdown(Some(Duration::from_secs(3))),
-                None => {}
-            }
+        match optional_sidebar {
+            Some(sidebar) => {
+                if sidebar == Sidebar::QUIT {
+                    let model = get_current_mut_model(s);
 
-            match handle_model.clone().conn {
-                crate::tui::model::Conn::SQLITE(c) => {
-                    futures::executor::block_on(c.connection.unwrap().close());
+                    match &model.handle {
+                        Some(h) => h.graceful_shutdown(Some(Duration::from_secs(3))),
+                        None => {}
+                    }
+
+                    match &model.conn {
+                        Some(c) => {
+                            futures::executor::block_on(c.close());
+                        }
+                        None => {}
+                    }
+
+                    s.quit();
+                } else {
+                    let mut dashboards = utils::get_data_from_refname::<
+                        ScreensView<NamedView<ResizedView<Dialog>>>,
+                    >(s, "dashboards");
+
+                    dashboards.set_active_screen(*idx);
                 }
-                crate::tui::model::Conn::MYSQL(c) => {
-                    futures::executor::block_on(c.connection.unwrap().close());
-                }
-                _ => panic!("no database detected!"),
             }
-
-            s.quit();
-        } else {
-            let mut dashboards = utils::get_data_from_refname::<
-                ScreensView<NamedView<ResizedView<Dialog>>>,
-            >(s, "dashboards");
-
-            dashboards.set_active_screen(*idx);
+            None => panic!("error: {}", idx),
         }
     };
 
@@ -67,10 +72,10 @@ pub fn display_dashboard(s: &mut Cursive) {
     let mut dashboards = ScreensView::default();
 
     dashboards.add_active_screen(role::role_dashboard(s));
-    dashboards.add_screen(auth::auth_dashboard(s));
-    dashboards.add_screen(query::query_dashboard(s));
-    dashboards.add_screen(editor::editor_dashboard(s));
-    dashboards.add_screen(server::server_dashboard(s));
+    // dashboards.add_screen(auth::auth_dashboard(s));
+    // dashboards.add_screen(query::query_dashboard(s));
+    // dashboards.add_screen(editor::editor_dashboard(s));
+    // dashboards.add_screen(server::server_dashboard(s));
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)

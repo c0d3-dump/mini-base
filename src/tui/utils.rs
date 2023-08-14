@@ -1,6 +1,6 @@
 use cursive::{views::ViewRef, Cursive, View};
 
-use super::{components, jsondb, model::Model};
+use crate::queries::Model;
 
 pub fn get_current_model(s: &mut Cursive) -> Model {
     s.with_user_data(|data: &mut Model| data.clone()).unwrap()
@@ -17,23 +17,21 @@ where
     s.find_name::<T>(refname).unwrap()
 }
 
-pub fn update_role_with_model(s: &mut Cursive) {
-    let model = get_current_model(s);
-    jsondb::to_json(model.clone());
+// pub fn update_role_with_model(s: &mut Cursive) {
+//     let model = get_current_mut_model(s);
 
-    components::selector::update_select_component(s, "role_list", model.rolelist);
-}
+//     components::selector::update_select_component(s, "role_list", model.rolelist);
+// }
 
-pub fn update_query_with_model(s: &mut Cursive) {
-    let model = get_current_model(s);
-    jsondb::to_json(model.clone());
+// pub fn update_query_with_model(s: &mut Cursive) {
+//     let model = get_current_model(s);
 
-    let query_list_items = model
-        .querylist
-        .into_iter()
-        .map(|r| r.label)
-        .collect::<Vec<String>>();
+//     let query_list_items = model
+//         .querylist
+//         .into_iter()
+//         .map(|r| r.label)
+//         .collect::<Vec<String>>();
 
-    components::selector::update_select_component(s, "query_list", query_list_items.clone());
-    components::selector::update_select_component(s, "query_editor_list", query_list_items);
-}
+//     components::selector::update_select_component(s, "query_list", query_list_items.clone());
+//     components::selector::update_select_component(s, "query_editor_list", query_list_items);
+// }

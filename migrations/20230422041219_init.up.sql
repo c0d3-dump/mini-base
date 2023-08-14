@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
         name VARCHAR(255) NOT NULL,
         exec_type VARCHAR(50) NOT NULL CHECK (exec_type IN ('fetch', 'execute')),
-        query TEXT
+        query TEXT DEFAULT ""
     );
 
 CREATE TABLE IF NOT EXISTS

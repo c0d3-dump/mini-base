@@ -1,6 +1,7 @@
 mod database;
-mod parser;
-mod server;
+mod queries;
+// mod parser;
+// mod server;
 mod tui;
 
 fn main() {
