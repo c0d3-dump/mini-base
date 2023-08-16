@@ -15,10 +15,10 @@ use crate::{
     tui::model::{Conn, ExecType, Model},
 };
 
-mod auth;
-pub mod model;
-mod storage;
-mod utils;
+// mod auth;
+// pub mod model;
+// mod storage;
+// mod utils;
 
 #[tokio::main]
 pub async fn start_server(model: Model, handle: Handle) {

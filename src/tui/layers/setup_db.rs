@@ -3,34 +3,41 @@ use cursive::{
     views::{Dialog, EditView},
     Cursive,
 };
+use enum_iterator::all;
 
-use crate::tui::model::{Conn, Db, DbType, Model};
-use crate::tui::utils::get_current_model;
-use crate::{
-    database,
-    tui::{components, jsondb, utils},
-};
+use crate::database;
+use crate::database::model::DbType;
+use crate::tui::components;
+use crate::tui::utils::{get_current_mut_model, get_data_from_refname};
 
 use super::dashboard;
 
 pub fn select_dbtype(s: &mut Cursive) {
     let on_select = |s: &mut Cursive, idx: &usize| {
-        let dbtype = match idx {
-            0 => DbType::SQLITE,
-            1 => DbType::MYSQL,
-            _ => panic!("error: dbtype selection"),
-        };
+        let optional_dbtype = all::<DbType>()
+            .enumerate()
+            .filter(|(i, _)| i == idx)
+            .map(|(_, x)| x)
+            .next();
 
-        setup_db_connection(s, dbtype);
+        match optional_dbtype {
+            Some(dbtype) => {
+                setup_db_connection(s, dbtype);
+            }
+            None => {}
+        }
     };
 
-    let dbtype = vec![DbType::SQLITE.to_string(), DbType::MYSQL.to_string()];
+    let dbtypes = all::<DbType>()
+        .enumerate()
+        .map(|(idx, dbtype)| (idx, dbtype.to_string()))
+        .collect::<Vec<(usize, String)>>();
 
-    let select = components::selector::select_component(dbtype, "select_dbtype", on_select);
+    let select = components::selector::select_component(dbtypes, "select_dbtype", on_select);
 
     s.add_layer(
         Dialog::new()
-            .title("select database type")
+            .title("Databases")
             .content(select)
             .button("quit", Cursive::quit),
     );
@@ -38,62 +45,25 @@ pub fn select_dbtype(s: &mut Cursive) {
 
 fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
     let on_submit = move |s: &mut Cursive| {
-        let conn = match dbtype {
-            DbType::SQLITE => {
-                let dbpath = utils::get_data_from_refname::<EditView>(s, "dbpath")
-                    .get_content()
-                    .to_string();
+        let dbpath = get_data_from_refname::<EditView>(s, "dbpath")
+            .get_content()
+            .to_string();
 
-                let conn = database::sqlite::Sqlite::new(&dbpath);
+        let conn = database::Conn::new(dbtype.clone(), &dbpath);
 
-                (dbpath, Conn::SQLITE(conn))
+        match conn.err {
+            Some(e) => {
+                s.add_layer(Dialog::info(e));
             }
-            DbType::MYSQL => {
-                let dbpath = utils::get_data_from_refname::<EditView>(s, "dbpath")
-                    .get_content()
-                    .to_string();
+            None => {
+                let model = get_current_mut_model(s);
+                model.conn = Some(conn);
 
-                let conn = database::mysql::Mysql::new(&dbpath);
+                s.pop_layer();
+                s.pop_layer();
 
-                (dbpath, Conn::MYSQL(conn))
+                dashboard::display_dashboard(s);
             }
-        };
-
-        let (dbpath, conn) = conn;
-        match &conn {
-            Conn::SQLITE(c) => match &c.err {
-                Some(err) => s.add_layer(Dialog::info(err)),
-                None => {
-                    s.with_user_data(|m: &mut Model| {
-                        m.db = Db::SQLITE { dbpath };
-                        m.conn = conn;
-                    });
-
-                    let model = get_current_model(s);
-                    jsondb::to_json(model);
-
-                    s.pop_layer();
-                    s.pop_layer();
-                    dashboard::display_dashboard(s);
-                }
-            },
-            Conn::MYSQL(c) => match &c.err {
-                Some(err) => s.add_layer(Dialog::info(err)),
-                None => {
-                    s.with_user_data(|m: &mut Model| {
-                        m.db = Db::MYSQL { dbpath };
-                        m.conn = conn;
-                    });
-
-                    let model = get_current_model(s);
-                    jsondb::to_json(model);
-
-                    s.pop_layer();
-                    s.pop_layer();
-                    dashboard::display_dashboard(s);
-                }
-            },
-            Conn::None => panic!(),
         }
     };
     let on_cancel = |s: &mut Cursive| {
@@ -104,7 +74,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
 
     s.add_layer(
         Dialog::new()
-            .title("add database values")
+            .title("Url")
             .content(dbpath_view)
             .button("submit", on_submit)
             .button("cancel", on_cancel),

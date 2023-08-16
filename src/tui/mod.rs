@@ -1,5 +1,6 @@
+use crate::queries::Model;
+
 mod components;
-mod jsondb;
 mod layers;
 pub mod model;
 mod style;
@@ -10,7 +11,7 @@ pub fn run() {
 
     app.set_theme(style::get_theme());
 
-    let model = jsondb::from_json();
+    let model = Model::default();
 
     app.set_user_data(model);
 

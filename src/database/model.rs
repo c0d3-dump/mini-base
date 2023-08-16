@@ -1,6 +1,8 @@
+use core::fmt;
 use std::collections::HashMap;
 
 use chrono::{DateTime, Local, NaiveTime};
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 
@@ -26,4 +28,20 @@ pub struct ColInfo {
     pub notnull: bool,
     pub dflt_value: Option<String>,
     pub pk: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Sequence)]
+pub enum DbType {
+    #[default]
+    SQLITE,
+    MYSQL,
+}
+
+impl fmt::Display for DbType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DbType::SQLITE => write!(f, "SQLITE"),
+            DbType::MYSQL => write!(f, "MYSQL"),
+        }
+    }
 }

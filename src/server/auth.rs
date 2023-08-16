@@ -11,11 +11,7 @@ use axum::{
     Router,
 };
 
-use crate::{
-    database::model::ColType,
-    server::model::ResponseUser,
-    tui::model::{Conn, Model},
-};
+use crate::{database::model::ColType, server::model::ResponseUser, tui::model::Model};
 
 use super::model::{RegisterUserSchema, User};
 
