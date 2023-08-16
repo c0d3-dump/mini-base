@@ -10,15 +10,15 @@ use crate::{
     tui::{
         components::{
             self,
-            selector::{add_select_item, remove_select_item},
+            selector::{add_select_item, remove_select_item, update_select_item},
         },
         model::Sidebar,
-        utils::{get_current_model, get_current_mut_model, get_data_from_refname},
+        utils::{get_current_mut_model, get_data_from_refname},
     },
 };
 
 pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
-    let mut model = get_current_model(s);
+    let model = get_current_mut_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
         edit_role(s, *idx);
@@ -34,9 +34,6 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         }
         Err(e) => s.add_layer(Dialog::info(e)),
     }
-
-    let last_role = roles.iter().last().unwrap();
-    model.index.role = last_role.id;
 
     let role_list = components::selector::select_component(
         roles.into_iter().map(|r| (r.id as usize, r.name)).collect(),
@@ -114,7 +111,7 @@ fn edit_role(s: &mut Cursive, idx: usize) {
 
         let role = Role {
             id: idx as i64,
-            name: label,
+            name: label.clone(),
             is_default: *boolean_group.selection(),
             can_read: storageaccess[0],
             can_write: storageaccess[1],
@@ -132,12 +129,13 @@ fn edit_role(s: &mut Cursive, idx: usize) {
             }
         };
 
+        update_select_item(s, "role_list", label, idx);
+
         s.pop_layer();
     };
 
     let on_delete = move |s: &mut Cursive| {
         let model = get_current_mut_model(s);
-        dbg!(idx);
         let res = futures::executor::block_on(model.delete_role(idx as i64));
 
         match res {
@@ -176,25 +174,16 @@ fn add_role(s: &mut Cursive) {
         let res = futures::executor::block_on(model.add_new_role(data.get_content().to_string()));
 
         match res {
-            Ok(_) => {}
+            Ok(i) => {
+                add_select_item(s, "role_list", data.get_content().to_string(), i as usize);
+
+                s.pop_layer();
+            }
             Err(e) => {
                 s.add_layer(Dialog::info(e));
                 return;
             }
         };
-
-        let model = get_current_mut_model(s);
-        let new_idx = model.index.role + 1;
-        model.index.role = new_idx;
-
-        add_select_item(
-            s,
-            "role_list",
-            data.get_content().to_string(),
-            new_idx as usize,
-        );
-
-        s.pop_layer();
     };
 
     let on_cancel = |s: &mut Cursive| {

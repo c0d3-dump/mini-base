@@ -7,8 +7,8 @@ use enum_iterator::all;
 
 use crate::database;
 use crate::database::model::DbType;
-use crate::queries::Model;
-use crate::tui::{components, utils};
+use crate::tui::components;
+use crate::tui::utils::{get_current_mut_model, get_data_from_refname};
 
 use super::dashboard;
 
@@ -45,7 +45,7 @@ pub fn select_dbtype(s: &mut Cursive) {
 
 fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
     let on_submit = move |s: &mut Cursive| {
-        let dbpath = utils::get_data_from_refname::<EditView>(s, "dbpath")
+        let dbpath = get_data_from_refname::<EditView>(s, "dbpath")
             .get_content()
             .to_string();
 
@@ -56,9 +56,8 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 s.add_layer(Dialog::info(e));
             }
             None => {
-                s.with_user_data(|m: &mut Model| {
-                    m.conn = Some(conn);
-                });
+                let model = get_current_mut_model(s);
+                model.conn = Some(conn);
 
                 s.pop_layer();
                 s.pop_layer();

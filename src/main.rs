@@ -4,6 +4,7 @@ mod queries;
 // mod server;
 mod tui;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tui::run();
 }

@@ -1,23 +1,18 @@
 #[derive(Debug, Clone)]
 pub struct Offset {
     pub user: i64,
-    pub query: i64,
     pub storage: i64,
 }
 
 #[derive(Debug, Clone)]
 pub struct SearchTerm {
     pub user: String,
-    pub query: String,
     pub storage: String,
 }
 
 #[derive(Debug, Clone)]
-pub struct Index {
-    pub role: i64,
-    pub user: i64,
-    pub query: i64,
-    pub storage: i64,
+pub struct Temp {
+    pub query_access: Vec<QueryAccess>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -58,8 +53,16 @@ pub struct Query {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
-pub struct RoleAccess {
-    pub role_id: i64,
+pub struct QueryName {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct QueryAccess {
+    pub id: i64,
+    pub name: String,
+    pub has_access: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

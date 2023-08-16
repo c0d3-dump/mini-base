@@ -21,12 +21,12 @@ pub fn checkbox_group_component(refname: &str, items: Vec<(String, bool)>) -> im
 }
 
 pub fn get_checked_data(s: &mut Cursive, all_items: Vec<String>) -> Vec<bool> {
-    let mut checked_items = vec![];
+    let mut items = vec![];
 
     for i in all_items {
         let checkbox = s.find_name::<Checkbox>(&i).unwrap();
-        checked_items.push(checkbox.is_checked());
+        items.push(checkbox.is_checked());
     }
 
-    checked_items
+    items
 }

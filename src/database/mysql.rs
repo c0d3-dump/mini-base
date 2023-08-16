@@ -25,7 +25,7 @@ impl Mysql {
                     CREATE TABLE IF NOT EXISTS
                         roles (
                             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                            name VARCHAR(255) NOT NULL,
+                            name VARCHAR(255) NOT NULL UNIQUE,
                             is_default TINYINT(1) NOT NULL DEFAULT 0,
                             can_read TINYINT(1) NOT NULL DEFAULT 0,
                             can_write TINYINT(1) NOT NULL DEFAULT 0,
@@ -45,7 +45,7 @@ impl Mysql {
                         storage (
                             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                             file_name VARCHAR(255) NOT NULL,
-                            unique_name VARCHAR(36) NOT NULL,
+                            unique_name VARCHAR(36) NOT NULL UNIQUE,
                             uploaded_by INTEGER NOT NULL,
                             FOREIGN KEY (uploaded_by) REFERENCES users (id)
                         );
@@ -53,8 +53,8 @@ impl Mysql {
                     CREATE TABLE IF NOT EXISTS
                         queries (
                             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                            name VARCHAR(255) NOT NULL,
-                            exec_type VARCHAR(50) NOT NULL CHECK (exec_type IN ('fetch', 'execute')),
+                            name VARCHAR(255) NOT NULL UNIQUE,
+                            exec_type VARCHAR(50) NOT NULL DEFAULT fetch CHECK (exec_type IN ('fetch', 'execute')),
                             query TEXT DEFAULT ''
                         );
                     

@@ -2,7 +2,7 @@ use core::fmt;
 use std::collections::HashMap;
 
 use chrono::{DateTime, Local, NaiveTime};
-use enum_iterator::{all, Sequence};
+use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
 
@@ -44,13 +44,4 @@ impl fmt::Display for DbType {
             DbType::MYSQL => write!(f, "MYSQL"),
         }
     }
-}
-
-#[test]
-fn enum_test() {
-    let enum_values = all::<DbType>()
-        .map(|s| s.to_string())
-        .collect::<Vec<String>>();
-
-    println!("{:?}", enum_values);
 }
