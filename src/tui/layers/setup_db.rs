@@ -37,7 +37,7 @@ pub fn select_dbtype(s: &mut Cursive) {
 
     s.add_layer(
         Dialog::new()
-            .title("select database type")
+            .title("Databases")
             .content(select)
             .button("quit", Cursive::quit),
     );
@@ -74,7 +74,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
 
     s.add_layer(
         Dialog::new()
-            .title("add database values")
+            .title("Url")
             .content(dbpath_view)
             .button("submit", on_submit)
             .button("cancel", on_cancel),

@@ -28,6 +28,7 @@ impl Model {
             },
             temp: Temp {
                 query_access: vec![],
+                query_string: "".to_string(),
             },
         }
     }

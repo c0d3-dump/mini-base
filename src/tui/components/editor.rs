@@ -4,7 +4,7 @@ use cursive::{
     Cursive, View,
 };
 
-pub fn editor_componant<F>(refname: String, title: &str, cb: F, content: String) -> impl View
+pub fn editor_componant<F>(refname: &str, title: &str, cb: F, content: String) -> impl View
 where
     F: Fn(&mut Cursive) + 'static,
 {

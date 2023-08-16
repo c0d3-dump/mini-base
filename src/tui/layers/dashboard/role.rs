@@ -42,7 +42,7 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     );
 
     Dialog::new()
-        .title("role")
+        .title("Role")
         .content(role_list)
         .button("Add Role", add_role)
         .full_screen()

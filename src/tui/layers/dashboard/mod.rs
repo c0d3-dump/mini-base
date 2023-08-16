@@ -15,10 +15,9 @@ use crate::tui::{
 };
 
 // pub mod auth;
-// pub mod editor;
 pub mod query;
 pub mod role;
-// pub mod server;
+pub mod server;
 
 pub fn display_dashboard(s: &mut Cursive) {
     let sidebar_items = all::<Sidebar>()
@@ -73,9 +72,8 @@ pub fn display_dashboard(s: &mut Cursive) {
 
     dashboards.add_active_screen(role::role_dashboard(s));
     dashboards.add_screen(query::query_dashboard(s));
+    dashboards.add_screen(server::server_dashboard(s));
     // dashboards.add_screen(auth::auth_dashboard(s));
-    // dashboards.add_screen(editor::editor_dashboard(s));
-    // dashboards.add_screen(server::server_dashboard(s));
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)

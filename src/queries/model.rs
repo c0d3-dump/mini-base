@@ -13,6 +13,7 @@ pub struct SearchTerm {
 #[derive(Debug, Clone)]
 pub struct Temp {
     pub query_access: Vec<QueryAccess>,
+    pub query_string: String,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

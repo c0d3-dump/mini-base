@@ -1,7 +1,10 @@
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable, Scrollable},
-    views::{Button, Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView},
+    views::{
+        Button, Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView,
+        TextArea,
+    },
     Cursive, With,
 };
 
@@ -46,7 +49,7 @@ pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     );
 
     Dialog::new()
-        .title("query")
+        .title("Query")
         .content(query_list)
         .button("Add Query", add_query)
         .full_screen()
@@ -161,6 +164,44 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         }),
     );
 
+    list.add_child(
+        "editor",
+        Button::new("", move |s: &mut Cursive| {
+            let model = get_current_mut_model(s);
+
+            let optional_query_string =
+                futures::executor::block_on(model.get_query_string_by_id(idx as i64));
+
+            let query_string: String;
+            match optional_query_string {
+                Ok(s) => {
+                    model.temp.query_string = s.query.clone();
+                    query_string = s.query;
+                }
+                Err(e) => {
+                    s.add_layer(Dialog::info(e));
+                    return;
+                }
+            }
+
+            let on_submit = move |s: &mut Cursive| {
+                let query_ref = get_data_from_refname::<TextArea>(s, "query_editor");
+
+                let model = get_current_mut_model(s);
+                model.temp.query_string = query_ref.get_content().to_string();
+
+                s.pop_layer();
+            };
+
+            s.add_layer(components::editor::editor_componant(
+                "query_editor",
+                "editor",
+                on_submit,
+                query_string,
+            ));
+        }),
+    );
+
     let on_submit = move |s: &mut Cursive| {
         let label_ref = get_data_from_refname::<EditView>(s, "edit_query_label");
 
@@ -168,13 +209,18 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
         let exec_type = boolean_group.selection().as_ref().to_owned();
 
-        let mut model = get_current_model(s);
+        let model = get_current_mut_model(s);
+        let query_string = model.temp.query_string.clone();
+        model.temp.query_string.clear();
 
-        let res1 = futures::executor::block_on(model.edit_query(Query {
-            id: idx as i64,
-            name: label.clone(),
-            exec_type,
-        }));
+        let res1 = futures::executor::block_on(model.edit_query(
+            Query {
+                id: idx as i64,
+                name: label.clone(),
+                exec_type,
+            },
+            query_string,
+        ));
 
         match res1 {
             Ok(_) => {}

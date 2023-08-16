@@ -65,12 +65,3 @@ pub fn remove_select_item(s: &mut Cursive, refname: &str, idx: usize) {
         None => {}
     }
 }
-
-pub fn update_select_component(s: &mut Cursive, refname: &str, items: Vec<String>) {
-    let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
-
-    selectview.clear();
-    for i in 0..items.len() {
-        selectview.add_item(items.get(i).unwrap(), i);
-    }
-}

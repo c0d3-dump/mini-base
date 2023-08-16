@@ -9,36 +9,31 @@ use cursive::{
     Cursive,
 };
 
-use crate::{
-    server,
-    tui::{
-        model::Sidebar,
-        utils::{get_current_model, get_current_mut_model, get_data_from_refname},
-    },
+use crate::tui::{
+    model::Sidebar,
+    utils::{get_current_model, get_current_mut_model, get_data_from_refname},
 };
 
 pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let mut layout = LinearLayout::new(Orientation::Vertical);
 
     let on_start_pressed = |s: &mut Cursive| {
-        let model = get_current_model(s);
+        let model = get_current_mut_model(s);
 
-        let handle_model = get_current_mut_model(s);
-
-        match handle_model.clone().handle {
+        match model.clone().handle {
             Some(h) => h.graceful_shutdown(Some(Duration::from_secs(3))),
             None => {}
         }
 
-        handle_model.handle = Some(Handle::new());
+        model.handle = Some(Handle::new());
 
-        let handle = handle_model.handle.clone().unwrap();
+        // let handle = model.handle.clone().unwrap();
 
-        thread::spawn(move || {
-            server::start_server(model.to_owned(), handle);
-        });
+        // thread::spawn(move || {
+        //     server::start_server(model.to_owned(), handle);
+        // });
 
-        update_logs(s);
+        update_apis(s);
     };
 
     let on_stop_pressed = |s: &mut Cursive| {
@@ -51,7 +46,7 @@ pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
             }
         }
 
-        clear_logs(s);
+        clear_apis(s);
     };
 
     layout.add_child(
@@ -60,11 +55,11 @@ pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
             .child(Button::new("stop", on_stop_pressed)),
     );
 
-    let logs = ListView::new().with_name("server_logs");
+    let apis = ListView::new().with_name("server_apis");
     layout.add_child(
         Dialog::new()
             .title("apis")
-            .content(logs.scrollable())
+            .content(apis.scrollable())
             .full_screen(),
     );
 
@@ -75,44 +70,44 @@ pub fn server_dashboard(_s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .with_name(Sidebar::SERVER.to_string())
 }
 
-fn update_logs(s: &mut Cursive) {
+fn update_apis(s: &mut Cursive) {
     let model = get_current_model(s);
 
-    let mut logs = get_data_from_refname::<ListView>(s, "server_logs");
-    logs.clear();
-    logs.add_child(
+    let mut apis = get_data_from_refname::<ListView>(s, "server_apis");
+    apis.clear();
+    apis.add_child(
         "/auth/login",
         TextView::new("Auth").align(Align::center_right()),
     );
-    logs.add_child(
+    apis.add_child(
         "/auth/signup",
         TextView::new("Auth").align(Align::center_right()),
     );
-    logs.add_child(
+    apis.add_child(
         "/auth/logout",
         TextView::new("Auth").align(Align::center_right()),
     );
-    logs.add_child(
+    apis.add_child(
         "/storage/get",
         TextView::new("Storage").align(Align::center_right()),
     );
-    logs.add_child(
+    apis.add_child(
         "/storage/upload",
         TextView::new("Storage").align(Align::center_right()),
     );
-    logs.add_child(
+    apis.add_child(
         "/storage/delete",
         TextView::new("Storage").align(Align::center_right()),
     );
-    for q in model.querylist {
-        logs.add_child(
-            format!("/api/{}", q.label),
-            TextView::new(q.exec_type.to_string()).align(Align::center_right()),
-        );
-    }
+    // for q in model.querylist {
+    //     apis.add_child(
+    //         format!("/api/{}", q.label),
+    //         TextView::new(q.exec_type.to_string()).align(Align::center_right()),
+    //     );
+    // }
 }
 
-fn clear_logs(s: &mut Cursive) {
-    let mut logs = get_data_from_refname::<ListView>(s, "server_logs");
-    logs.clear();
+fn clear_apis(s: &mut Cursive) {
+    let mut apis = get_data_from_refname::<ListView>(s, "server_apis");
+    apis.clear();
 }

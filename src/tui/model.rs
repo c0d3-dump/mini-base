@@ -6,8 +6,6 @@ use enum_iterator::Sequence;
 pub enum Sidebar {
     ROLE,
     QUERY,
-    AUTH,
-    EDITOR,
     SERVER,
     QUIT,
 }
@@ -17,8 +15,6 @@ impl fmt::Display for Sidebar {
         match self {
             Sidebar::ROLE => write!(f, "ROLE"),
             Sidebar::QUERY => write!(f, "QUERY"),
-            Sidebar::AUTH => write!(f, "AUTH"),
-            Sidebar::EDITOR => write!(f, "EDITOR"),
             Sidebar::SERVER => write!(f, "SERVER"),
             Sidebar::QUIT => write!(f, "QUIT"),
         }

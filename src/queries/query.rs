@@ -64,7 +64,8 @@ impl Model {
         let query = format!(
             "SELECT id, name, CASE WHEN role_access.query_id={} THEN TRUE ELSE FALSE END AS has_access
              FROM roles
-             LEFT JOIN role_access ON role_id=roles.id",
+             LEFT JOIN role_access ON role_id=roles.id 
+             GROUP BY role_id",
             query_id
         );
 
@@ -75,12 +76,13 @@ impl Model {
             .await
     }
 
-    pub async fn edit_query(&self, q: Query) -> Result<u64, String> {
-        let query = "UPDATE queries SET name=?, exec_type=? WHERE id=?";
+    pub async fn edit_query(&self, q: Query, query_string: String) -> Result<u64, String> {
+        let query = "UPDATE queries SET name=?, exec_type=?, query=? WHERE id=?";
 
         let args = vec![
             ColType::String(Some(q.name)),
             ColType::String(Some(q.exec_type)),
+            ColType::String(Some(query_string)),
             ColType::Integer(Some(q.id)),
         ];
 
@@ -182,10 +184,10 @@ fn remaining_ids(arr1: Vec<i64>, arr2: Vec<i64>) -> (Vec<i64>, Vec<i64>) {
 #[test]
 fn test1() {
     let arr1 = vec![1, 2];
-    let arr2 = vec![1];
+    let arr2 = vec![1, 3];
 
     let (insertable, deletable) = remaining_ids(arr1, arr2);
 
-    // assert_eq!(insertable, vec![]);
-    assert_eq!(deletable, vec![1]);
+    assert_eq!(insertable, vec![3]);
+    assert_eq!(deletable, vec![2]);
 }
