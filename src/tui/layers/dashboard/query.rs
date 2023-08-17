@@ -1,11 +1,7 @@
 use cursive::{
-    direction::Orientation,
     view::{Nameable, Resizable, Scrollable},
-    views::{
-        Button, Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView,
-        TextArea,
-    },
-    Cursive, With,
+    views::{Button, Dialog, EditView, ListView, NamedView, ResizedView, TextArea},
+    Cursive,
 };
 
 use crate::{
@@ -14,7 +10,7 @@ use crate::{
         components::{
             self,
             checkbox_group::get_checked_data,
-            selector::{add_select_item, remove_select_item, update_select_item},
+            selector::{add_select_item, remove_select_item, select_component, update_select_item},
         },
         model::Sidebar,
         utils::{get_current_model, get_current_mut_model, get_data_from_refname},
@@ -80,18 +76,36 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             .with_name("edit_query_label"),
     );
 
-    let mut boolean_group: RadioGroup<String> = RadioGroup::new();
     list.add_child(
         "Type",
-        LinearLayout::new(Orientation::Horizontal)
-            .child(boolean_group.button("fetch".to_string(), "Fetch"))
-            .child(
-                boolean_group
-                    .button("execute".to_string(), "Execute")
-                    .with_if(query.exec_type == "execute".to_string(), |b| {
-                        b.select();
-                    }),
-            ),
+        Button::new(query.exec_type, |s: &mut Cursive| {
+            let items: Vec<(usize, String)> = vec![
+                (0, "get".to_string()),
+                (1, "post".to_string()),
+                (2, "delete".to_string()),
+                (3, "put".to_string()),
+            ];
+
+            // TODO: add default highlight when opening type selection
+
+            let exec_types = select_component(
+                items.clone(),
+                "exec_type",
+                move |s: &mut Cursive, idx: &usize| {
+                    let mut button_label_ref =
+                        get_data_from_refname::<Button>(s, "exec_type_label");
+
+                    let (_, selected_label) = items.get(*idx).unwrap();
+
+                    button_label_ref.set_label(selected_label);
+
+                    s.pop_layer();
+                },
+            );
+
+            s.add_layer(exec_types);
+        })
+        .with_name("exec_type_label"),
     );
 
     let model = get_current_model(s);
@@ -204,10 +218,12 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
     let on_submit = move |s: &mut Cursive| {
         let label_ref = get_data_from_refname::<EditView>(s, "edit_query_label");
-
         let label = label_ref.get_content().to_string();
 
-        let exec_type = boolean_group.selection().as_ref().to_owned();
+        let mut exec_type: String = "get".to_string();
+        s.call_on_name("exec_type_label", |v: &mut Button| {
+            exec_type = v.label().replace("<", "").replace(">", "").to_string();
+        });
 
         let model = get_current_mut_model(s);
         let query_string = model.temp.query_string.clone();

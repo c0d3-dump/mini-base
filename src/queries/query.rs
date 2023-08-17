@@ -16,6 +16,16 @@ impl Model {
             .await
     }
 
+    pub async fn get_all_apis(&self) -> Result<Vec<Query>, String> {
+        let query = "SELECT id, name, exec_type FROM queries ORDER BY id";
+
+        self.conn
+            .as_ref()
+            .unwrap()
+            .query_all_with_type::<Query>(query)
+            .await
+    }
+
     pub async fn get_query_by_id(&self, role_id: i64) -> Result<Query, String> {
         let query = format!(
             "SELECT id, name, exec_type 
@@ -62,10 +72,10 @@ impl Model {
 
     pub async fn get_query_access_by_id(&self, query_id: i64) -> Result<Vec<QueryAccess>, String> {
         let query = format!(
-            "SELECT id, name, CASE WHEN role_access.query_id={} THEN TRUE ELSE FALSE END AS has_access
-             FROM roles
-             LEFT JOIN role_access ON role_id=roles.id 
-             GROUP BY role_id",
+            "SELECT id, 
+             name, 
+             (SELECT TRUE FROM role_access WHERE role_id=roles.id AND query_id={}) AS has_access 
+             FROM roles",
             query_id
         );
 
