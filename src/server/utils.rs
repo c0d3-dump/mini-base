@@ -1,9 +1,12 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sha2::{Digest, Sha256};
 
-use super::model::{TokenFile, TokenUser, User};
+use crate::{parser::parse_type, queries::model::User};
+
+use super::model::{AuthUser, TokenFile, TokenUser};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthTokenClaims {
@@ -29,7 +32,6 @@ pub fn generate_auth_token(user: User) -> Result<String, jsonwebtoken::errors::E
     let token_user = TokenUser {
         id: user.id,
         email: user.email,
-        role: user.role,
     };
 
     let claim = AuthTokenClaims {
@@ -93,4 +95,22 @@ pub fn decode_storage_token(
         &DecodingKey::from_secret("secret".as_ref()),
         &Validation::default(),
     )
+}
+
+pub fn extract_type_from_string(val: &str) -> Value {
+    let val_type = parse_type(val);
+
+    match val_type {
+        "string" => Value::String(val.to_string()),
+        "number" => Value::Number(val.parse().unwrap()),
+        "bool" => {
+            let mut t = false;
+            if val == "true" {
+                t = true;
+            }
+            Value::Bool(t)
+        }
+        "null" => Value::Null,
+        _ => panic!(),
+    }
 }

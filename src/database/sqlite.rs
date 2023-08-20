@@ -74,7 +74,7 @@ impl Sqlite {
                             role_id INTEGER NOT NULL,
                             query_id INTEGER NOT NULL,
                             FOREIGN KEY (role_id) REFERENCES roles (id),
-                            FOREIGN KEY (query_id) REFERENCES queries (id),
+                            FOREIGN KEY (query_id) REFERENCES queries (id) ON DELETE CASCADE,
                             UNIQUE (role_id, query_id)
                         );
                     ";

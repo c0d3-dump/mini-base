@@ -1,11 +1,7 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
-use crate::tui::model::{Conn, StorageAccess};
-
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
-pub struct User {
+pub struct AuthUser {
     pub id: i64,
     pub email: String,
     pub password: String,
@@ -29,27 +25,13 @@ pub struct ResponseUser {
     pub id: i64,
     pub email: String,
     pub token: String,
-    pub role: String,
+    pub role: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenUser {
     pub id: i64,
     pub email: String,
-    pub role: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct AuthState {
-    pub dbconn: Conn,
-    pub curr_role: Vec<String>,
-    pub default_role: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct StorageState {
-    pub default_role: String,
-    pub storage_access: HashMap<String, StorageAccess>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

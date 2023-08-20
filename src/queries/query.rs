@@ -51,6 +51,19 @@ impl Model {
             .await
     }
 
+    pub async fn get_query_by_name(&self, query_name: &str) -> Result<Query, String> {
+        let query = format!(
+            "SELECT id, name, exec_type FROM queries WHERE name='{}'",
+            query_name
+        );
+
+        self.conn
+            .as_ref()
+            .unwrap()
+            .query_one_with_type::<Query>(&query)
+            .await
+    }
+
     pub async fn add_new_query(&self, name: String) -> Result<i64, String> {
         let query = "INSERT INTO queries(name) VALUES (?) RETURNING id";
         let args = vec![ColType::String(Some(name))];
@@ -86,13 +99,29 @@ impl Model {
             .await
     }
 
-    pub async fn edit_query(&self, q: Query, query_string: String) -> Result<u64, String> {
-        let query = "UPDATE queries SET name=?, exec_type=?, query=? WHERE id=?";
+    pub async fn edit_query_string(
+        &self,
+        query_id: i64,
+        query_string: String,
+    ) -> Result<u64, String> {
+        dbg!(&query_string);
+
+        let query = "UPDATE queries SET query=? WHERE id=?";
+
+        let args = vec![
+            ColType::String(Some(query_string)),
+            ColType::Integer(Some(query_id)),
+        ];
+
+        self.conn.as_ref().unwrap().execute(query, args).await
+    }
+
+    pub async fn edit_query(&self, q: Query) -> Result<u64, String> {
+        let query = "UPDATE queries SET name=?, exec_type=? WHERE id=?";
 
         let args = vec![
             ColType::String(Some(q.name)),
             ColType::String(Some(q.exec_type)),
-            ColType::String(Some(query_string)),
             ColType::Integer(Some(q.id)),
         ];
 

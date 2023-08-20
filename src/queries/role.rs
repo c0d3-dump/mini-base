@@ -1,7 +1,7 @@
 use crate::database::model::ColType;
 
 use super::{
-    model::{Role, RoleName},
+    model::{DefaultRole, Role, RoleName},
     Model,
 };
 

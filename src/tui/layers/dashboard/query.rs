@@ -82,8 +82,8 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             let items: Vec<(usize, String)> = vec![
                 (0, "get".to_string()),
                 (1, "post".to_string()),
-                (2, "delete".to_string()),
-                (3, "put".to_string()),
+                (2, "put".to_string()),
+                (3, "delete".to_string()),
             ];
 
             // TODO: add default highlight when opening type selection
@@ -183,18 +183,22 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         Button::new("", move |s: &mut Cursive| {
             let model = get_current_mut_model(s);
 
-            let optional_query_string =
-                futures::executor::block_on(model.get_query_string_by_id(idx as i64));
+            let mut query_string: String = model.temp.query_string.clone();
 
-            let query_string: String;
-            match optional_query_string {
-                Ok(s) => {
-                    model.temp.query_string = s.query.clone();
-                    query_string = s.query;
-                }
-                Err(e) => {
-                    s.add_layer(Dialog::info(e));
-                    return;
+            if !model.temp.query_written {
+                let optional_query_string =
+                    futures::executor::block_on(model.get_query_string_by_id(idx as i64));
+
+                match optional_query_string {
+                    Ok(s) => {
+                        query_string = s.query;
+                        model.temp.query_written = true;
+                        model.temp.query_string = query_string.clone();
+                    }
+                    Err(e) => {
+                        s.add_layer(Dialog::info(e));
+                        return;
+                    }
                 }
             }
 
@@ -226,17 +230,12 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         });
 
         let model = get_current_mut_model(s);
-        let query_string = model.temp.query_string.clone();
-        model.temp.query_string.clear();
 
-        let res1 = futures::executor::block_on(model.edit_query(
-            Query {
-                id: idx as i64,
-                name: label.clone(),
-                exec_type,
-            },
-            query_string,
-        ));
+        let res1 = futures::executor::block_on(model.edit_query(Query {
+            id: idx as i64,
+            name: label.clone(),
+            exec_type,
+        }));
 
         match res1 {
             Ok(_) => {}
@@ -260,6 +259,26 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             }
         }
 
+        if model.temp.query_written {
+            model.temp.query_written = false;
+
+            let query_string = model.temp.query_string.clone();
+            model.temp.query_string.clear();
+
+            dbg!(&query_string);
+
+            let res3: Result<u64, String> =
+                futures::executor::block_on(model.edit_query_string(idx as i64, query_string));
+
+            match res3 {
+                Ok(_) => {}
+                Err(e) => {
+                    s.add_layer(Dialog::info(e));
+                    return;
+                }
+            }
+        }
+
         update_select_item(s, "query_list", label, idx);
 
         s.pop_layer();
@@ -267,6 +286,8 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
     let on_delete = move |s: &mut Cursive| {
         let model = get_current_mut_model(s);
+        model.temp.query_written = false;
+
         let res = futures::executor::block_on(model.delete_query(idx as i64));
 
         match res {
@@ -283,6 +304,9 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     };
 
     let on_cancel = |s: &mut Cursive| {
+        let model = get_current_mut_model(s);
+        model.temp.query_written = false;
+
         s.pop_layer();
     };
 

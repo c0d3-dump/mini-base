@@ -1,9 +1,10 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
-    character::complete::{alpha1, alphanumeric1, multispace1},
+    character::complete::{alpha1, alphanumeric1, digit1, multispace0, multispace1},
     combinator::{peek, value},
-    multi::many0,
+    error::Error,
+    multi::{many0, many1},
     sequence::{delimited, preceded},
     IResult,
 };
@@ -85,12 +86,42 @@ pub fn replace_variables_in_query(input: &str, variables: Vec<&str>) -> String {
     out
 }
 
+pub fn parse_type(input: &str) -> &str {
+    let x: IResult<&str, &str> = alt((tag("true"), tag("false")))(input);
+    match x {
+        Ok(_) => "bool",
+        Err(_) => {
+            let x: IResult<&str, Vec<&str>> = many1(alt((digit1, tag("."))))(input);
+            match x {
+                Ok(_) => "number",
+                Err(_) => {
+                    let x: IResult<&str, Vec<&str>> =
+                        many1(alt((alphanumeric1, tag(" "), tag("\\n"), tag("\\t"))))(input);
+                    match x {
+                        Ok(_) => "string",
+                        Err(_) => "null",
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::parser::{parse_query, replace_variables_in_query};
+    use crate::parser::{parse_query, parse_type, replace_variables_in_query};
 
     #[test]
     fn test() {
+        assert_eq!(parse_type("1"), "number");
+        assert_eq!(parse_type("1.2"), "number");
+        assert_eq!(parse_type("true"), "bool");
+        assert_eq!(parse_type("false"), "bool");
+        assert_eq!(parse_type("Hello "), "string");
+    }
+
+    #[test]
+    fn test1() {
         assert_eq!(
             parse_query("SELECT * FROM todos where user_id=${userId};"),
             Ok(("", vec!["userId"]))

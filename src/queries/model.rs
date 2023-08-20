@@ -14,6 +14,7 @@ pub struct SearchTerm {
 pub struct Temp {
     pub query_access: Vec<QueryAccess>,
     pub query_string: String,
+    pub query_written: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -33,10 +34,16 @@ pub struct RoleName {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+pub struct DefaultRole {
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct User {
     pub id: i64,
     pub email: String,
     pub password: String,
+    pub role: Option<String>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
