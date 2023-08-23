@@ -119,8 +119,19 @@ fn edit_role(s: &mut Cursive, idx: usize) {
         };
 
         let model = get_current_mut_model(s);
-        let res = futures::executor::block_on(model.edit_role(role));
+        if *boolean_group.selection() {
+            let res = futures::executor::block_on(model.unset_default_role());
 
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    s.add_layer(Dialog::info(e));
+                    return;
+                }
+            };
+        }
+
+        let res = futures::executor::block_on(model.edit_role(role));
         match res {
             Ok(_) => {}
             Err(e) => {
@@ -130,7 +141,6 @@ fn edit_role(s: &mut Cursive, idx: usize) {
         };
 
         update_select_item(s, "role_list", label, idx);
-
         s.pop_layer();
     };
 

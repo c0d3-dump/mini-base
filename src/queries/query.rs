@@ -1,7 +1,7 @@
 use crate::database::model::ColType;
 
 use super::{
-    model::{Query, QueryAccess, QueryName, QueryString},
+    model::{Query, QueryAccess, QueryName, QueryString, RoleAccess},
     Model,
 };
 
@@ -13,6 +13,22 @@ impl Model {
             .as_ref()
             .unwrap()
             .query_all_with_type::<QueryName>(query)
+            .await
+    }
+
+    pub async fn get_all_role_access_by_query_id(
+        &self,
+        query_id: i64,
+    ) -> Result<Vec<RoleAccess>, String> {
+        let query = format!(
+            "SELECT role_id FROM role_access WHERE query_id={}",
+            query_id
+        );
+
+        self.conn
+            .as_ref()
+            .unwrap()
+            .query_all_with_type::<RoleAccess>(&query)
             .await
     }
 

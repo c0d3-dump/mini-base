@@ -15,6 +15,7 @@ pub struct Temp {
     pub query_access: Vec<QueryAccess>,
     pub query_string: String,
     pub query_written: bool,
+    pub query_access_update: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -47,6 +48,15 @@ pub struct User {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+pub struct UserId {
+    pub id: i64,
+    pub email: String,
+    pub password: String,
+    pub role_id: Option<i64>,
+    pub role_name: Option<String>,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Storage {
     pub id: i64,
     pub file_name: String,
@@ -76,4 +86,9 @@ pub struct QueryAccess {
 #[derive(Debug, Clone, sqlx::FromRow)]
 pub struct QueryString {
     pub query: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
+pub struct RoleAccess {
+    pub role_id: i64,
 }

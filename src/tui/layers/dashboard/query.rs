@@ -1,6 +1,6 @@
 use cursive::{
     view::{Nameable, Resizable, Scrollable},
-    views::{Button, Dialog, EditView, ListView, NamedView, ResizedView, TextArea},
+    views::{Button, Dialog, EditView, ListView, NamedView, ResizedView, TextArea, TextView},
     Cursive,
 };
 
@@ -108,25 +108,26 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         .with_name("exec_type_label"),
     );
 
-    let model = get_current_model(s);
-
-    let optional_roles = futures::executor::block_on(model.get_query_access_by_id(idx as i64));
-
-    match optional_roles {
-        Ok(r) => {
-            let model = get_current_mut_model(s);
-            model.temp.query_access = r;
-        }
-        Err(e) => {
-            s.add_layer(Dialog::info(e));
-            return;
-        }
-    }
-
     list.add_child(
         "Access",
-        Button::new("", |s: &mut Cursive| {
+        Button::new("", move |s: &mut Cursive| {
             let model = get_current_mut_model(s);
+
+            if !model.temp.query_access_update {
+                let optional_roles =
+                    futures::executor::block_on(model.get_query_access_by_id(idx as i64));
+
+                match optional_roles {
+                    Ok(r) => {
+                        model.temp.query_access = r;
+                        model.temp.query_access_update = true;
+                    }
+                    Err(e) => {
+                        s.add_layer(Dialog::info(e));
+                        return;
+                    }
+                }
+            }
 
             let check_box = components::checkbox_group::checkbox_group_component(
                 "role_list",
@@ -248,14 +249,18 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         let query_access = model.temp.query_access.clone();
         model.temp.query_access.clear();
 
-        let res2: Result<u64, String> =
-            futures::executor::block_on(model.edit_query_access(idx as i64, query_access));
+        if model.temp.query_access_update {
+            model.temp.query_access_update = false;
 
-        match res2 {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
+            let res2: Result<u64, String> =
+                futures::executor::block_on(model.edit_query_access(idx as i64, query_access));
+
+            match res2 {
+                Ok(_) => {}
+                Err(e) => {
+                    s.add_layer(Dialog::info(e));
+                    return;
+                }
             }
         }
 
@@ -264,8 +269,6 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
             let query_string = model.temp.query_string.clone();
             model.temp.query_string.clear();
-
-            dbg!(&query_string);
 
             let res3: Result<u64, String> =
                 futures::executor::block_on(model.edit_query_string(idx as i64, query_string));
@@ -280,13 +283,13 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         }
 
         update_select_item(s, "query_list", label, idx);
-
         s.pop_layer();
     };
 
     let on_delete = move |s: &mut Cursive| {
         let model = get_current_mut_model(s);
         model.temp.query_written = false;
+        model.temp.query_access_update = false;
 
         let res = futures::executor::block_on(model.delete_query(idx as i64));
 
@@ -299,13 +302,13 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         };
 
         remove_select_item(s, "query_list", idx);
-
         s.pop_layer();
     };
 
     let on_cancel = |s: &mut Cursive| {
         let model = get_current_mut_model(s);
         model.temp.query_written = false;
+        model.temp.query_access_update = false;
 
         s.pop_layer();
     };
@@ -337,6 +340,13 @@ fn add_query(s: &mut Cursive) {
                     label_ref.get_content().to_string(),
                     i as usize,
                 );
+
+                // s.call_on_name("server_apis", |list: &mut ListView| {
+                //     list.add_child(
+                //         label_ref.get_content().to_string(),
+                //         TextView::new("get").align(Align::center_right()),
+                //     );
+                // });
 
                 s.pop_layer();
             }

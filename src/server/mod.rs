@@ -17,6 +17,8 @@ use crate::{
     server::utils::extract_type_from_string,
 };
 
+use self::auth::auth_middleware;
+
 mod auth;
 pub mod model;
 // mod storage;
@@ -55,17 +57,6 @@ fn generate_routes(model: Model) -> Router {
         .route_layer(middleware::from_fn_with_state(model, name_middleware));
 
     router
-}
-
-async fn auth_middleware<T>(
-    Extension(model): Extension<Model>,
-    Extension(query_id): Extension<i64>,
-    mut req: Request<T>,
-    next: Next<T>,
-) -> Result<Response, StatusCode> {
-    req.extensions_mut().insert::<Option<User>>(None);
-
-    return Ok(next.run(req).await);
 }
 
 async fn name_middleware<T>(
@@ -150,8 +141,6 @@ async fn handler(
     optional_user: Option<User>,
     data: Value,
 ) -> (StatusCode, String) {
-    dbg!(&data);
-
     let optional_query_string = model.get_query_string_by_id(query_id).await;
 
     match optional_query_string {
@@ -179,10 +168,10 @@ async fn handler(
                                         String::from(".userEmail"),
                                         ColType::String(Some(user.email.clone())),
                                     ),
-                                    // (
-                                    //     String::from(".userRole"),
-                                    //     ColType::String(Some(user.role.clone())),
-                                    // ),
+                                    (
+                                        String::from(".userRole"),
+                                        ColType::String(user.role.clone()),
+                                    ),
                                 ]);
                                 match map.get(&p) {
                                     Some(m) => Some(m.clone()),

@@ -1,7 +1,7 @@
 use crate::database::model::ColType;
 
 use super::{
-    model::{DefaultRole, Role, RoleName},
+    model::{Role, RoleName},
     Model,
 };
 
@@ -19,8 +19,8 @@ impl Model {
     pub async fn get_role_by_id(&self, role_id: i64) -> Result<Role, String> {
         let query = format!(
             "SELECT id, name, is_default, can_read, can_write, can_delete 
-         FROM roles 
-         WHERE id={}",
+             FROM roles 
+             WHERE id={}",
             role_id
         );
 
@@ -43,10 +43,17 @@ impl Model {
         }
     }
 
+    pub async fn unset_default_role(&self) -> Result<u64, String> {
+        let query = "UPDATE roles SET is_default=0";
+        let args = vec![];
+
+        self.conn.as_ref().unwrap().execute(query, args).await
+    }
+
     pub async fn edit_role(&self, role: Role) -> Result<u64, String> {
         let query = "UPDATE roles 
-        SET name=?, is_default=?, can_read=?, can_write=?, can_delete=? 
-        WHERE id=?";
+                    SET name=?, is_default=?, can_read=?, can_write=?, can_delete=? 
+                    WHERE id=?";
         let args = vec![
             ColType::String(Some(role.name)),
             ColType::Bool(Some(role.is_default)),

@@ -1,6 +1,9 @@
 use crate::database::model::ColType;
 
-use super::{model::User, Model};
+use super::{
+    model::{User, UserId},
+    Model,
+};
 
 impl Model {
     pub async fn get_all_users(&self, search_term: &str, offset: i64) -> Result<Vec<User>, String> {
@@ -22,12 +25,20 @@ impl Model {
             .await
     }
 
-    pub async fn get_user_by_id(&self, user_id: i64) -> Result<User, String> {
+    pub async fn get_user_by_id(&self, user_id: i64) -> Result<UserId, String> {
         let query = format!(
-            "SELECT id, email, password, roles.name AS role
+            "SELECT users.id, email, password, 
+             CASE WHEN role_id IS NULL 
+              THEN (SELECT id FROM roles WHERE is_default=1) 
+              ELSE roles.id END 
+             AS role_id,
+             CASE WHEN role_id IS NULL 
+              THEN (SELECT name FROM roles WHERE is_default=1) 
+              ELSE roles.id END 
+             AS role_name
              FROM users
-             INNER JOIN roles ON roles.id=role_id
-             WHERE id={}
+             LEFT JOIN roles ON roles.id=role_id
+             WHERE users.id={}
             ",
             user_id
         );
@@ -35,7 +46,7 @@ impl Model {
         self.conn
             .as_ref()
             .unwrap()
-            .query_one_with_type::<User>(&query)
+            .query_one_with_type::<UserId>(&query)
             .await
     }
 

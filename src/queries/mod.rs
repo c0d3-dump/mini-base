@@ -30,6 +30,7 @@ impl Model {
                 query_access: vec![],
                 query_string: "".to_string(),
                 query_written: false,
+                query_access_update: false,
             },
         }
     }

@@ -4,15 +4,18 @@ use axum::{
     middleware::Next,
     response::Response,
     routing::post,
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde_json::Value;
 
-use crate::queries::Model;
+use crate::queries::{
+    model::{User, UserId},
+    Model,
+};
 
 use super::{
     model::ResponseUser,
-    utils::{generate_auth_token, hash_password},
+    utils::{decode_auth_token, generate_auth_token, hash_password},
 };
 
 pub fn generate_auth_routes(model: Model) -> Router {
@@ -105,93 +108,78 @@ async fn logout() -> (StatusCode, String) {
     (StatusCode::OK, "logout successfully".to_string())
 }
 
-// pub async fn middleware<T>(
-//     State(model): State<Model>,
-//     mut req: Request<T>,
-//     next: Next<T>,
-// ) -> Result<Response, StatusCode> {
-//     if auth_state.curr_role.is_empty() {
-//         req.extensions_mut().insert(auth_state.dbconn);
-//         req.extensions_mut().insert::<Option<User>>(None);
-//         return Ok(next.run(req).await);
-//     }
+pub async fn auth_middleware<T>(
+    Extension(model): Extension<Model>,
+    Extension(query_id): Extension<i64>,
+    mut req: Request<T>,
+    next: Next<T>,
+) -> Result<Response, StatusCode> {
+    let optional_role_access = model.get_all_role_access_by_query_id(query_id).await;
 
-//     let auth_header = req
-//         .headers()
-//         .get(header::AUTHORIZATION)
-//         .and_then(|header| header.to_str().ok());
+    let role_access;
+    match optional_role_access {
+        Ok(ra) => {
+            if ra.len() <= 0 {
+                req.extensions_mut().insert::<Option<User>>(None);
+                return Ok(next.run(req).await);
+            }
+            role_access = ra;
+        }
+        Err(_) => {
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    }
 
-//     let auth_header = if let Some(auth_header) = auth_header {
-//         auth_header
-//     } else {
-//         return Err(StatusCode::UNAUTHORIZED);
-//     };
+    match req.headers().get(header::AUTHORIZATION) {
+        Some(auth_token) => match auth_token.to_str() {
+            Ok(token) => {
+                let optional_user = authorize_current_user(model, token).await;
+                match optional_user {
+                    Some(user) => {
+                        if user.role_id.is_none() {
+                            return Err(StatusCode::UNAUTHORIZED);
+                        }
+                        if role_access
+                            .into_iter()
+                            .map(|ra| ra.role_id)
+                            .collect::<Vec<i64>>()
+                            .contains(&user.role_id.unwrap())
+                        {
+                            req.extensions_mut().insert(Some(User {
+                                id: user.id,
+                                email: user.email,
+                                password: user.password,
+                                role: user.role_name,
+                            }));
+                        } else {
+                            return Err(StatusCode::UNAUTHORIZED);
+                        }
+                    }
+                    None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                }
+            }
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
+        None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
 
-//     if let Some(current_user) = authorize_current_user(auth_state.clone(), auth_header).await {
-//         let mut role = current_user.role.clone();
-//         if role.is_empty() {
-//             role = auth_state.default_role;
-//         }
+    Ok(next.run(req).await)
+}
 
-//         if auth_state.curr_role.contains(&role) {
-//             req.extensions_mut().insert(auth_state.dbconn);
-//             req.extensions_mut().insert(Some(current_user));
-//             Ok(next.run(req).await)
-//         } else {
-//             Err(StatusCode::UNAUTHORIZED)
-//         }
-//     } else {
-//         Err(StatusCode::UNAUTHORIZED)
-//     }
-// }
+async fn authorize_current_user(model: Model, auth_token: &str) -> Option<UserId> {
+    let token_claim = decode_auth_token(auth_token);
 
-// async fn authorize_current_user(state: AuthState, auth_token: &str) -> Option<User> {
-//     let token_claim = decode_auth_token(auth_token);
+    match token_claim {
+        Ok(data) => {
+            let user = data.claims.user;
 
-//     match token_claim {
-//         Ok(data) => {
-//             let user = data.claims.user;
+            let res = model.get_user_by_id(user.id).await;
 
-//             match &state.dbconn {
-//                 Conn::SQLITE(c) => {
-//                     let query = "SELECT * FROM users WHERE email = ?";
-
-//                     let conn = match c.clone().connection {
-//                         Some(conn) => conn,
-//                         None => panic!("database not connected"),
-//                     };
-
-//                     let r_out: Result<User, sqlx::Error> = sqlx::query_as(query)
-//                         .bind(user.email)
-//                         .fetch_one(&conn)
-//                         .await;
-
-//                     match r_out {
-//                         Ok(u) => Some(u),
-//                         Err(_) => None,
-//                     }
-//                 }
-//                 Conn::MYSQL(c) => {
-//                     let query = "SELECT * FROM users WHERE email = ?";
-
-//                     let conn = match c.clone().connection {
-//                         Some(conn) => conn,
-//                         None => panic!("database not connected"),
-//                     };
-
-//                     let r_out: Result<User, sqlx::Error> = sqlx::query_as(query)
-//                         .bind(user.email)
-//                         .fetch_one(&conn)
-//                         .await;
-
-//                     match r_out {
-//                         Ok(u) => Some(u),
-//                         Err(_) => None,
-//                     }
-//                 }
-//                 Conn::None => None,
-//             }
-//         }
-//         Err(_) => None,
-//     }
-// }
+            match res {
+                Ok(u) => Some(u),
+                Err(_) => None,
+            }
+        }
+        Err(_) => None,
+    }
+}
