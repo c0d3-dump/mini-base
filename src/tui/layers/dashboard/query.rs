@@ -1,6 +1,9 @@
 use cursive::{
+    align::Align,
     view::{Nameable, Resizable, Scrollable},
-    views::{Button, Dialog, EditView, ListView, NamedView, ResizedView, TextArea, TextView},
+    views::{
+        Button, Dialog, EditView, ListChild, ListView, NamedView, ResizedView, TextArea, TextView,
+    },
     Cursive,
 };
 
@@ -235,7 +238,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         let res1 = futures::executor::block_on(model.edit_query(Query {
             id: idx as i64,
             name: label.clone(),
-            exec_type,
+            exec_type: exec_type.clone(),
         }));
 
         match res1 {
@@ -282,7 +285,25 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             }
         }
 
-        update_select_item(s, "query_list", label, idx);
+        let res = update_select_item(s, "query_list", label.clone(), idx);
+        match res {
+            Some(i) => {
+                s.call_on_name("server_apis", move |list: &mut ListView| {
+                    let l = list.row_mut(i + 6);
+                    match l {
+                        ListChild::Row(_, _) => {
+                            *l = ListChild::Row(
+                                format!("/api/{}", label.clone()),
+                                Box::new(TextView::new(exec_type).align(Align::center_right())),
+                            );
+                        }
+                        _ => {}
+                    }
+                });
+            }
+            None => {}
+        }
+
         s.pop_layer();
     };
 
@@ -301,7 +322,16 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             }
         };
 
-        remove_select_item(s, "query_list", idx);
+        let res = remove_select_item(s, "query_list", idx);
+        match res {
+            Some(i) => {
+                s.call_on_name("server_apis", |list: &mut ListView| {
+                    list.remove_child(i + 6);
+                });
+            }
+            None => {}
+        }
+
         s.pop_layer();
     };
 
@@ -326,27 +356,22 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 fn add_query(s: &mut Cursive) {
     let on_submit = |s: &mut Cursive| {
         let label_ref = get_data_from_refname::<EditView>(s, "add_query_text");
+        let label_data = label_ref.get_content().to_string();
 
         let model = get_current_mut_model(s);
 
-        let res =
-            futures::executor::block_on(model.add_new_query(label_ref.get_content().to_string()));
+        let res = futures::executor::block_on(model.add_new_query(label_data.clone()));
 
         match res {
             Ok(i) => {
-                add_select_item(
-                    s,
-                    "query_list",
-                    label_ref.get_content().to_string(),
-                    i as usize,
-                );
+                add_select_item(s, "query_list", label_data.clone(), i as usize);
 
-                // s.call_on_name("server_apis", |list: &mut ListView| {
-                //     list.add_child(
-                //         label_ref.get_content().to_string(),
-                //         TextView::new("get").align(Align::center_right()),
-                //     );
-                // });
+                s.call_on_name("server_apis", |list: &mut ListView| {
+                    list.add_child(
+                        format!("/api/{}", label_data),
+                        TextView::new("get").align(Align::center_right()),
+                    );
+                });
 
                 s.pop_layer();
             }

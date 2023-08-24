@@ -17,7 +17,12 @@ where
     selectview.on_submit(cb).with_name(refname).scrollable()
 }
 
-pub fn update_select_item(s: &mut Cursive, refname: &str, item: String, idx: usize) {
+pub fn update_select_item(
+    s: &mut Cursive,
+    refname: &str,
+    item: String,
+    idx: usize,
+) -> Option<usize> {
     let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
 
     let binding = selectview
@@ -35,8 +40,9 @@ pub fn update_select_item(s: &mut Cursive, refname: &str, item: String, idx: usi
             selectview.insert_item(*i, item, *j);
 
             selectview.set_selection(*i);
+            Some(*i)
         }
-        None => {}
+        None => None,
     }
 }
 
@@ -46,7 +52,7 @@ pub fn add_select_item(s: &mut Cursive, refname: &str, item: String, idx: usize)
     selectview.add_item(item, idx);
 }
 
-pub fn remove_select_item(s: &mut Cursive, refname: &str, idx: usize) {
+pub fn remove_select_item(s: &mut Cursive, refname: &str, idx: usize) -> Option<usize> {
     let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
 
     let binding = selectview
@@ -61,7 +67,8 @@ pub fn remove_select_item(s: &mut Cursive, refname: &str, idx: usize) {
     match temp_idx {
         Some(i) => {
             selectview.remove_item(*i);
+            Some(*i)
         }
-        None => {}
+        None => None,
     }
 }

@@ -14,7 +14,7 @@ pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
 
     Dialog::new()
         .title("server")
-        .content(apis.scrollable().with_name("server_apis"))
+        .content(apis.with_name("server_apis").scrollable())
         .full_screen()
         .with_name(Sidebar::SERVER.to_string())
 }
