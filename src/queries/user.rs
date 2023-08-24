@@ -1,27 +1,81 @@
 use crate::database::model::ColType;
 
 use super::{
-    model::{User, UserId},
+    model::{User, UserId, UserRoleAccess},
     Model,
 };
 
 impl Model {
-    pub async fn get_all_users(&self, search_term: &str, offset: i64) -> Result<Vec<User>, String> {
+    pub async fn get_all_users(&self) -> Result<Vec<User>, String> {
+        let query = "SELECT users.id, email, password, roles.name AS role
+                 FROM users 
+                 INNER JOIN roles ON roles.id=role_id
+                 ORDER BY users.id
+                ";
+
+        self.conn
+            .as_ref()
+            .unwrap()
+            .query_all_with_type::<User>(query)
+            .await
+    }
+
+    pub async fn add_default_user(&self, user_email: String) -> Result<i64, String> {
+        let query = "UPDATE users 
+                    SET role_id=(SELECT id FROM roles WHERE is_default=1)
+                    WHERE role_id IS NULL AND users.email=? RETURNING users.id";
+
+        let args = vec![ColType::String(Some(user_email))];
+
+        let res = self.conn.as_ref().unwrap().query_one(query, args).await;
+        match res {
+            Ok(r) => Ok(r.get::<i64>(0).unwrap()),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn remove_default_user(&self, user_id: i64) -> Result<u64, String> {
+        let query = "UPDATE users 
+                    SET role_id=NULL
+                    WHERE users.id=?";
+
+        let args = vec![ColType::Integer(Some(user_id))];
+
+        self.conn.as_ref().unwrap().execute(query, args).await
+    }
+
+    pub async fn update_user_role(&self, user_id: i64, role_id: i64) -> Result<u64, String> {
+        let query = "UPDATE users 
+                    SET role_id=?
+                    WHERE users.id=?";
+
+        let args = vec![
+            ColType::Integer(Some(role_id)),
+            ColType::Integer(Some(user_id)),
+        ];
+
+        self.conn.as_ref().unwrap().execute(query, args).await
+    }
+
+    pub async fn get_user_role_access_by_id(
+        &self,
+        user_id: i64,
+    ) -> Result<Vec<UserRoleAccess>, String> {
         let query = format!(
-            "SELECT id, email, password 
-             FROM users 
-             WHERE id LIKE %{}% OR email LIKE %{}%
-             ORDER BY id 
-             LIMIT 25 
-             OFFSET {}
+            "SELECT roles.id AS role_id, name,
+             (CASE WHEN users.id IS NULL THEN FALSE ELSE TRUE END) AS is_selected 
+             FROM roles
+             LEFT JOIN users 
+              ON roles.id = users.role_id 
+               AND users.id={}
             ",
-            search_term, search_term, offset
+            user_id
         );
 
         self.conn
             .as_ref()
             .unwrap()
-            .query_all_with_type::<User>(&query)
+            .query_all_with_type::<UserRoleAccess>(&query)
             .await
     }
 

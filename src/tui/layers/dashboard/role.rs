@@ -177,15 +177,15 @@ fn edit_role(s: &mut Cursive, idx: usize) {
 
 fn add_role(s: &mut Cursive) {
     let on_submit = |s: &mut Cursive| {
-        let data = get_data_from_refname::<EditView>(s, "add_role_text");
+        let role_ref = get_data_from_refname::<EditView>(s, "add_role_text");
+        let role_text = role_ref.get_content().to_string();
 
         let model = get_current_mut_model(s);
-
-        let res = futures::executor::block_on(model.add_new_role(data.get_content().to_string()));
+        let res = futures::executor::block_on(model.add_new_role(role_text.clone()));
 
         match res {
             Ok(i) => {
-                add_select_item(s, "role_list", data.get_content().to_string(), i as usize);
+                add_select_item(s, "role_list", role_text, i as usize);
 
                 s.pop_layer();
             }

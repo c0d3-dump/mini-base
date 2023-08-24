@@ -1,9 +1,8 @@
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
-    character::complete::{alpha1, alphanumeric1, digit1, multispace0, multispace1},
+    character::complete::{alpha1, alphanumeric1, digit1, multispace1},
     combinator::{peek, value},
-    error::Error,
     multi::{many0, many1},
     sequence::{delimited, preceded},
     IResult,

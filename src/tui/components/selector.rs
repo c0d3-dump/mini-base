@@ -14,7 +14,11 @@ where
         selectview.add_item(item, idx);
     }
 
-    selectview.on_submit(cb).with_name(refname).scrollable()
+    selectview
+        .on_submit(cb)
+        .autojump()
+        .with_name(refname)
+        .scrollable()
 }
 
 pub fn update_select_item(

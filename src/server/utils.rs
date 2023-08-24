@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 
 use crate::{parser::parse_type, queries::model::User};
 
-use super::model::{AuthUser, TokenFile, TokenUser};
+use super::model::{TokenFile, TokenUser};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AuthTokenClaims {

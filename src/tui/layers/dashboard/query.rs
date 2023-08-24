@@ -2,7 +2,8 @@ use cursive::{
     align::Align,
     view::{Nameable, Resizable, Scrollable},
     views::{
-        Button, Dialog, EditView, ListChild, ListView, NamedView, ResizedView, TextArea, TextView,
+        Button, Dialog, EditView, ListChild, ListView, NamedView, ResizedView, SelectView,
+        TextArea, TextView,
     },
     Cursive,
 };
@@ -89,8 +90,6 @@ fn edit_query(s: &mut Cursive, idx: usize) {
                 (3, "delete".to_string()),
             ];
 
-            // TODO: add default highlight when opening type selection
-
             let exec_types = select_component(
                 items.clone(),
                 "exec_type",
@@ -107,6 +106,30 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             );
 
             s.add_layer(exec_types);
+
+            let button_label_ref = get_data_from_refname::<Button>(s, "exec_type_label");
+            let btn_label = button_label_ref
+                .label()
+                .replace("<", "")
+                .replace(">", "")
+                .to_string();
+
+            let items: Vec<(usize, String)> = vec![
+                (0, "get".to_string()),
+                (1, "post".to_string()),
+                (2, "put".to_string()),
+                (3, "delete".to_string()),
+            ];
+
+            let optional_i = items.iter().find(|(_, f)| f.to_string() == btn_label);
+            match optional_i {
+                Some((i, _)) => {
+                    let mut exec_type_ref =
+                        get_data_from_refname::<SelectView<usize>>(s, "exec_type");
+                    exec_type_ref.set_selection(*i);
+                }
+                None => todo!(),
+            }
         })
         .with_name("exec_type_label"),
     );

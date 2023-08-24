@@ -31,6 +31,7 @@ impl Model {
                 query_string: "".to_string(),
                 query_written: false,
                 query_access_update: false,
+                selected_role_access_id: None,
             },
         }
     }

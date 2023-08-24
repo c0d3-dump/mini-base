@@ -16,6 +16,7 @@ pub struct Temp {
     pub query_string: String,
     pub query_written: bool,
     pub query_access_update: bool,
+    pub selected_role_access_id: Option<i64>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -88,7 +89,14 @@ pub struct QueryString {
     pub query: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct RoleAccess {
     pub role_id: i64,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct UserRoleAccess {
+    pub role_id: i64,
+    pub name: String,
+    pub is_selected: bool,
 }
