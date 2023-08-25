@@ -44,7 +44,7 @@ async fn signup(State(model): State<Model>, Json(body): Json<Value>) -> (StatusC
 
             match res {
                 Ok(_) => (StatusCode::OK, "Signup successfull".to_string()),
-                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
+                Err(_) => (StatusCode::BAD_REQUEST, "Invalid Credentials".to_string()),
             }
         }
         (_, _) => (
@@ -94,7 +94,7 @@ async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCo
                         (StatusCode::OK, serde_json::to_string(&res_user).unwrap())
                     }
                 }
-                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
+                Err(_) => (StatusCode::BAD_REQUEST, "Invalid Credentials".to_string()),
             }
         }
         (_, _) => (

@@ -185,13 +185,8 @@ fn add_user(s: &mut Cursive) {
 
         match res {
             Ok(i) => {
-                if i > 0 {
-                    add_select_item(s, "user_list", user_text, i as usize);
-                    s.pop_layer();
-                } else {
-                    s.add_layer(Dialog::info("Enter valid email"));
-                    return;
-                }
+                add_select_item(s, "user_list", user_text, i as usize);
+                s.pop_layer();
             }
             Err(e) => {
                 s.add_layer(Dialog::info(e));
