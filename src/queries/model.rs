@@ -49,6 +49,15 @@ pub struct User {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+pub struct UserStorage {
+    pub id: i64,
+    pub role_id: Option<i64>,
+    pub can_read: bool,
+    pub can_write: bool,
+    pub can_delete: bool,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct UserId {
     pub id: i64,
     pub email: String,

@@ -21,7 +21,7 @@ use self::auth::auth_middleware;
 
 mod auth;
 pub mod model;
-// mod storage;
+mod storage;
 mod utils;
 
 #[tokio::main]
@@ -29,7 +29,7 @@ pub async fn start_server(model: Model) {
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
         .nest("/auth", auth::generate_auth_routes(model.clone()))
-        // .nest("/storage", storage::generate_storage_routes(model.clone()))
+        .nest("/storage", storage::generate_storage_routes(model.clone()))
         .nest("/api", generate_routes(model.clone()))
         .layer(
             CorsLayer::new()
@@ -48,15 +48,13 @@ pub async fn start_server(model: Model) {
 }
 
 fn generate_routes(model: Model) -> Router {
-    let router = Router::new()
+    Router::new()
         .route("/:name", get(get_handler))
         .route("/:name", post(post_handler))
         .route("/:name", put(put_handler))
         .route("/:name", delete(delete_handler))
         .route_layer(middleware::from_fn(auth_middleware))
-        .route_layer(middleware::from_fn_with_state(model, name_middleware));
-
-    router
+        .route_layer(middleware::from_fn_with_state(model, name_middleware))
 }
 
 async fn name_middleware<T>(

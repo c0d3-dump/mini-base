@@ -9,7 +9,7 @@ use axum::{
 use serde_json::Value;
 
 use crate::queries::{
-    model::{User, UserId},
+    model::{User, UserId, UserStorage},
     Model,
 };
 
@@ -133,7 +133,7 @@ pub async fn auth_middleware<T>(
     match req.headers().get(header::AUTHORIZATION) {
         Some(auth_token) => match auth_token.to_str() {
             Ok(token) => {
-                let optional_user = authorize_current_user(model, token).await;
+                let optional_user = authorize_current_user(&model, token).await;
                 match optional_user {
                     Some(user) => {
                         if user.role_id.is_none() {
@@ -166,7 +166,51 @@ pub async fn auth_middleware<T>(
     Ok(next.run(req).await)
 }
 
-async fn authorize_current_user(model: Model, auth_token: &str) -> Option<UserId> {
+pub async fn storage_middleware<T>(
+    State(model): State<Model>,
+    mut req: Request<T>,
+    next: Next<T>,
+) -> Result<Response, StatusCode> {
+    match req.headers().get(header::AUTHORIZATION) {
+        Some(auth_token) => match auth_token.to_str() {
+            Ok(token) => {
+                let optional_user = authorize_current_user(&model, token).await;
+                match optional_user {
+                    Some(user) => {
+                        if user.role_id.is_none() {
+                            return Err(StatusCode::UNAUTHORIZED);
+                        }
+
+                        let optional_access = model.get_role_by_id(user.role_id.unwrap()).await;
+                        match optional_access {
+                            Ok(role) => {
+                                req.extensions_mut().insert(model);
+                                req.extensions_mut().insert(Some(UserStorage {
+                                    id: user.id,
+                                    role_id: user.role_id,
+                                    can_read: role.can_read,
+                                    can_write: role.can_write,
+                                    can_delete: role.can_delete,
+                                }));
+                            }
+                            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                        }
+                    }
+                    None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                }
+            }
+            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        },
+        None => {
+            req.extensions_mut().insert(model);
+            req.extensions_mut().insert::<Option<User>>(None);
+        }
+    }
+
+    Ok(next.run(req).await)
+}
+
+async fn authorize_current_user(model: &Model, auth_token: &str) -> Option<UserId> {
     let token_claim = decode_auth_token(auth_token);
 
     match token_claim {

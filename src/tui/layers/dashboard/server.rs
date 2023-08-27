@@ -33,16 +33,16 @@ fn update_apis(s: &mut Cursive, mut apis: ListView) -> ListView {
         TextView::new("post").align(Align::center_right()),
     );
     apis.add_child(
-        "/storage/get",
-        TextView::new("get").align(Align::center_right()),
-    );
-    apis.add_child(
         "/storage/upload",
         TextView::new("post").align(Align::center_right()),
     );
     apis.add_child(
         "/storage/delete",
-        TextView::new("delete").align(Align::center_right()),
+        TextView::new("post").align(Align::center_right()),
+    );
+    apis.add_child(
+        "/storage/generate-token",
+        TextView::new("post").align(Align::center_right()),
     );
 
     let model = get_current_mut_model(s);

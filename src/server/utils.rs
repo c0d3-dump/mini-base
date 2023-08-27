@@ -70,7 +70,7 @@ pub fn generate_storage_token(
 ) -> Result<String, jsonwebtoken::errors::Error> {
     let mut now = Utc::now();
     let iat = now.timestamp() as usize;
-    let exp_in = Duration::minutes(2);
+    let exp_in = Duration::minutes(1);
     now += exp_in;
     let exp = now.timestamp() as usize;
 
