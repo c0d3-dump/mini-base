@@ -1,4 +1,4 @@
-use cursive::theme::{BaseColor, BorderStyle, Color, Palette, PaletteColor, Theme};
+use cursive::theme::{BorderStyle, Color, Palette, PaletteColor, Theme};
 
 pub fn get_theme() -> Theme {
     let mut theme = Theme::default();
@@ -8,18 +8,18 @@ pub fn get_theme() -> Theme {
 
     let mut palette = Palette::default();
 
-    palette[PaletteColor::Background] = Color::Dark(BaseColor::Black);
-    palette[PaletteColor::Shadow] = Color::Dark(BaseColor::Black);
-    palette[PaletteColor::View] = Color::Dark(BaseColor::Black);
+    palette[PaletteColor::Background] = Color::parse("#000000").unwrap();
+    palette[PaletteColor::Shadow] = Color::parse("#000000").unwrap();
+    palette[PaletteColor::View] = Color::parse("#000000").unwrap();
 
-    palette[PaletteColor::Primary] = Color::Dark(BaseColor::White);
+    palette[PaletteColor::Primary] = Color::parse("#fff").unwrap();
     palette[PaletteColor::Secondary] = Color::parse("#c1c1c1").unwrap();
-    palette[PaletteColor::Tertiary] = Color::Dark(BaseColor::Black);
+    palette[PaletteColor::Tertiary] = Color::parse("#000000").unwrap();
 
-    palette[PaletteColor::TitlePrimary] = Color::Dark(BaseColor::Blue);
-    palette[PaletteColor::TitleSecondary] = Color::Dark(BaseColor::Yellow);
+    palette[PaletteColor::TitlePrimary] = Color::parse("#5555FF").unwrap();
+    palette[PaletteColor::TitleSecondary] = Color::parse("#FFFF00").unwrap();
 
-    palette[PaletteColor::Highlight] = Color::Dark(BaseColor::Magenta);
+    palette[PaletteColor::Highlight] = Color::parse("#ff00ff").unwrap();
     palette[PaletteColor::HighlightInactive] = Color::parse("#5555FF").unwrap();
 
     theme.palette = palette;
