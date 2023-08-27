@@ -184,11 +184,13 @@ async fn generate_token(
     }
 
     let file_id: i64;
-    match body.get("file_id") {
-        Some(Value::Number(f_id)) => {
+    let exp_time: i64;
+    match (body.get("file_id"), body.get("exp_time")) {
+        (Some(Value::Number(f_id)), Some(Value::Number(e_time))) => {
             file_id = f_id.as_i64().unwrap();
+            exp_time = e_time.as_i64().unwrap();
         }
-        _ => {
+        (_, _) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "error generating token".to_string(),
@@ -198,9 +200,12 @@ async fn generate_token(
 
     match model.get_file_by_id(file_id).await {
         Ok(s) => {
-            let optional_token = generate_storage_token(TokenFile {
-                unique_name: s.unique_name,
-            });
+            let optional_token = generate_storage_token(
+                TokenFile {
+                    unique_name: s.unique_name,
+                },
+                exp_time,
+            );
             match optional_token {
                 Ok(token) => {
                     let url = format!("http://localhost:3456/storage/get?token={}", token);
@@ -252,15 +257,18 @@ async fn get_file(
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
 
+            let mime_type;
+            match mime_guess::from_path(file_path).first_raw() {
+                Some(mt) => {
+                    mime_type = mt;
+                }
+                None => {
+                    mime_type = "application/octet-stream";
+                }
+            }
+
             let response = Response::builder()
-                .header(
-                    "Content-Disposition",
-                    format!(
-                        "attachment; filename={}",
-                        token_file.claims.file.unique_name
-                    ),
-                )
-                .header("Content-Type", "application/octet-stream")
+                .header("Content-Type", mime_type)
                 .body(Full::new(Bytes::from(content)));
 
             match response {

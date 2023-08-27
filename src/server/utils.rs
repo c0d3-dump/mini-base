@@ -50,10 +50,13 @@ pub fn generate_auth_token(user: User) -> Result<String, jsonwebtoken::errors::E
 pub fn decode_auth_token(
     token: &str,
 ) -> Result<TokenData<AuthTokenClaims>, jsonwebtoken::errors::Error> {
+    let mut validation = Validation::default();
+    validation.leeway = 0;
+
     decode::<AuthTokenClaims>(
         token,
         &DecodingKey::from_secret("secret".as_ref()),
-        &Validation::default(),
+        &validation,
     )
 }
 
@@ -67,10 +70,11 @@ pub fn hash_password(password: String) -> String {
 
 pub fn generate_storage_token(
     token_file: TokenFile,
+    exp_time: i64,
 ) -> Result<String, jsonwebtoken::errors::Error> {
     let mut now = Utc::now();
     let iat = now.timestamp() as usize;
-    let exp_in = Duration::minutes(1);
+    let exp_in = Duration::seconds(exp_time);
     now += exp_in;
     let exp = now.timestamp() as usize;
 
@@ -90,10 +94,13 @@ pub fn generate_storage_token(
 pub fn decode_storage_token(
     token: &str,
 ) -> Result<TokenData<StorageTokenClaims>, jsonwebtoken::errors::Error> {
+    let mut validation = Validation::default();
+    validation.leeway = 0;
+
     decode::<StorageTokenClaims>(
         token,
         &DecodingKey::from_secret("secret".as_ref()),
-        &Validation::default(),
+        &validation,
     )
 }
 
