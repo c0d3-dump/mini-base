@@ -62,11 +62,13 @@ pub fn display_dashboard(s: &mut Cursive) {
         }
     };
 
-    let sidebar = Dialog::new().content(components::selector::select_component(
-        sidebar_items,
-        "sidebar_items",
-        on_select,
-    ));
+    let sidebar = Dialog::new()
+        .content(components::selector::select_component(
+            sidebar_items,
+            "sidebar_items",
+            on_select,
+        ))
+        .padding_lrtb(1, 1, 1, 0);
 
     let mut dashboards = ScreensView::default();
 

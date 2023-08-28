@@ -14,8 +14,8 @@ where
         .title(title)
         .padding_lrtb(1, 1, 1, 0)
         .content(textarea.content(content).with_name(refname).full_screen())
-        .button("SUBMIT", cb)
-        .button("CANCEL", |s| {
+        .button("submit", cb)
+        .button("cancel", |s| {
             s.pop_layer();
         })
 }

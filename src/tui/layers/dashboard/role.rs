@@ -44,6 +44,7 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     Dialog::new()
         .title("Role")
         .content(role_list)
+        .padding_lrtb(1, 1, 1, 0)
         .button("Add Role", add_role)
         .full_screen()
         .with_name(Sidebar::ROLE.to_string())
@@ -67,13 +68,13 @@ fn edit_role(s: &mut Cursive, idx: usize) {
 
     let mut list = ListView::new();
     list.add_child(
-        "label",
+        "Label",
         EditView::new().content(role.name).with_name("edit_label"),
     );
 
     let mut boolean_group: RadioGroup<bool> = RadioGroup::new();
     list.add_child(
-        "default role",
+        "Default Role",
         LinearLayout::new(Orientation::Horizontal)
             .child(boolean_group.button(false, "False"))
             .child(
@@ -94,7 +95,7 @@ fn edit_role(s: &mut Cursive, idx: usize) {
     let check_box =
         components::checkbox_group::checkbox_group_component("storage_access", storage_list);
 
-    list.add_child("storage access", check_box);
+    list.add_child("Storage Access", check_box);
 
     let on_submit = move |s: &mut Cursive| {
         let edit_ref = s.find_name::<EditView>("edit_label").unwrap();
@@ -167,8 +168,9 @@ fn edit_role(s: &mut Cursive, idx: usize) {
 
     s.add_layer(
         Dialog::new()
-            .title("edit role")
+            .title("Edit Role")
             .content(list)
+            .padding_lrtb(1, 1, 1, 0)
             .button("submit", on_submit)
             .button("delete", on_delete)
             .button("cancel", on_cancel),
@@ -204,7 +206,8 @@ fn add_role(s: &mut Cursive) {
 
     s.add_layer(
         Dialog::new()
-            .title("add role")
+            .title("Add Role Name")
+            .padding_lrtb(1, 1, 1, 0)
             .content(textedit.with_name("add_role_text"))
             .button("submit", on_submit)
             .button("cancel", on_cancel),

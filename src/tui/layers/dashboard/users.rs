@@ -43,6 +43,7 @@ pub fn users_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     Dialog::new()
         .title("Users")
         .content(user_list)
+        .padding_lrtb(1, 1, 1, 0)
         .button("Add User", add_user)
         .full_screen()
         .with_name(Sidebar::USERS.to_string())
@@ -144,6 +145,7 @@ fn edit_user(s: &mut Cursive, idx: usize) {
         Dialog::new()
             .title("")
             .content(list)
+            .padding_lrtb(1, 1, 1, 0)
             .button("submit", on_submit)
             .button("delete", on_delete)
             .button("cancel", on_cancel)
@@ -203,7 +205,8 @@ fn add_user(s: &mut Cursive) {
 
     s.add_layer(
         Dialog::new()
-            .title("Add User")
+            .title("Add User Email")
+            .padding_lrtb(1, 1, 1, 0)
             .content(textedit.with_name("add_user_text"))
             .button("submit", on_submit)
             .button("cancel", on_cancel),

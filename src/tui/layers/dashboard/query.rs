@@ -51,6 +51,7 @@ pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     Dialog::new()
         .title("Query")
         .content(query_list)
+        .padding_lrtb(1, 1, 1, 0)
         .button("Add Query", add_query)
         .full_screen()
         .with_name(Sidebar::QUERY.to_string())
@@ -206,7 +207,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     );
 
     list.add_child(
-        "editor",
+        "Editor",
         Button::new("", move |s: &mut Cursive| {
             let model = get_current_mut_model(s);
 
@@ -240,7 +241,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
             s.add_layer(components::editor::editor_componant(
                 "query_editor",
-                "editor",
+                "Editor",
                 on_submit,
                 query_string,
             ));
@@ -368,8 +369,9 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
     s.add_layer(
         Dialog::new()
-            .title("edit query")
+            .title("Edit Query")
             .content(list)
+            .padding_lrtb(1, 1, 1, 0)
             .button("submit", on_submit)
             .button("delete", on_delete)
             .button("cancel", on_cancel),
@@ -415,6 +417,7 @@ fn add_query(s: &mut Cursive) {
         Dialog::new()
             .title("add query")
             .content(textedit.with_name("add_query_text"))
+            .padding_lrtb(1, 1, 1, 0)
             .button("submit", on_submit)
             .button("cancel", on_cancel),
     );
