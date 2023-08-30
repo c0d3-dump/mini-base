@@ -22,7 +22,7 @@ use self::auth::auth_middleware;
 mod auth;
 pub mod model;
 mod storage;
-mod utils;
+pub mod utils;
 
 #[tokio::main]
 pub async fn start_server(model: Model) {

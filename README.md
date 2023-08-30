@@ -6,7 +6,7 @@
 
 ***
 
-![mini-base server](./examples/todo/screenshots/server.png)
+![mini-base server image](./examples/todo/screenshots/server.png)
 
 
 ### how to run on linux
@@ -29,6 +29,7 @@ cargo run
 - [x] : role based authentication using jwt
 - [x] : some examples to play with
 - [x] : file upload support with role based access
+- [ ] : screen to add cors access, auth/storage secrets
 - [ ] : suggest new ideas
 
 ## Crates used for this project

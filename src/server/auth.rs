@@ -13,10 +13,7 @@ use crate::queries::{
     Model,
 };
 
-use super::{
-    model::ResponseUser,
-    utils::{decode_auth_token, generate_auth_token, hash_password},
-};
+use super::{model::ResponseUser, utils::hash_password};
 
 pub fn generate_auth_routes(model: Model) -> Router {
     Router::new()
@@ -81,7 +78,7 @@ async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCo
                             "Enter valid email and password".to_string(),
                         )
                     } else {
-                        let token = generate_auth_token(user.clone()).unwrap();
+                        let token = model.utils.generate_auth_token(user.clone()).unwrap();
                         let role = user.role;
 
                         let res_user = ResponseUser {
@@ -211,7 +208,7 @@ pub async fn storage_middleware<T>(
 }
 
 async fn authorize_current_user(model: &Model, auth_token: &str) -> Option<UserId> {
-    let token_claim = decode_auth_token(auth_token);
+    let token_claim = model.utils.decode_auth_token(auth_token);
 
     match token_claim {
         Ok(data) => {

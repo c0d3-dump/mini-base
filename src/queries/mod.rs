@@ -1,6 +1,6 @@
 use axum_server::Handle;
 
-use crate::database::Conn;
+use crate::{database::Conn, server::utils::Utils};
 
 use self::model::{Offset, Temp};
 pub mod model;
@@ -15,6 +15,7 @@ pub struct Model {
     pub handle: Option<Handle>,
     pub offset: Offset,
     pub temp: Temp,
+    pub utils: Utils,
 }
 
 impl Model {
@@ -32,6 +33,10 @@ impl Model {
                 query_written: false,
                 query_access_update: false,
                 selected_role_access_id: None,
+            },
+            utils: Utils {
+                auth_secret: "secret".to_string(),
+                storage_secret: "secret".to_string(),
             },
         }
     }

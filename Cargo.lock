@@ -756,6 +756,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs2"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1121,6 +1131,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 
 [[package]]
+name = "jfs"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f428b1cf5248265f8358cf96c602323ce4bea140827eaefd8901e3106fec5e44"
+dependencies = [
+ "fs2",
+ "log",
+ "parking_lot 0.12.1",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1246,6 +1270,7 @@ dependencies = [
  "enum-iterator",
  "flexi_logger 0.25.6",
  "futures",
+ "jfs",
  "jsonwebtoken",
  "log",
  "mime",

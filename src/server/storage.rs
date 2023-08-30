@@ -21,7 +21,6 @@ use tokio::{
 use super::{
     auth::{self},
     model::TokenFile,
-    utils::{decode_storage_token, generate_storage_token},
 };
 
 pub fn generate_storage_routes(model: Model) -> Router {
@@ -29,11 +28,11 @@ pub fn generate_storage_routes(model: Model) -> Router {
         .route("/upload", post(upload))
         .route("/delete", post(delete))
         .route("/generate-token", post(generate_token))
+        .route("/get", get(get_file))
         .route_layer(middleware::from_fn_with_state(
             model,
             auth::storage_middleware,
         ))
-        .route("/get", get(get_file))
 }
 
 async fn upload(
@@ -200,7 +199,7 @@ async fn generate_token(
 
     match model.get_file_by_id(file_id).await {
         Ok(s) => {
-            let optional_token = generate_storage_token(
+            let optional_token = model.utils.generate_storage_token(
                 TokenFile {
                     unique_name: s.unique_name,
                 },
@@ -229,6 +228,7 @@ async fn generate_token(
 }
 
 async fn get_file(
+    Extension(model): Extension<Model>,
     Query(query): Query<HashMap<String, String>>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let token;
@@ -241,7 +241,7 @@ async fn get_file(
         }
     }
 
-    match decode_storage_token(token) {
+    match model.utils.decode_storage_token(token) {
         Ok(token_file) => {
             let file_path = format!("./uploads/{}", token_file.claims.file.unique_name);
 

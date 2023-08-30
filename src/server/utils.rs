@@ -22,42 +22,89 @@ pub struct StorageTokenClaims {
     pub exp: usize,
 }
 
-pub fn generate_auth_token(user: User) -> Result<String, jsonwebtoken::errors::Error> {
-    let mut now = Utc::now();
-    let iat = now.timestamp() as usize;
-    let exp_in = Duration::hours(24);
-    now += exp_in;
-    let exp = now.timestamp() as usize;
-
-    let token_user = TokenUser {
-        id: user.id,
-        email: user.email,
-    };
-
-    let claim = AuthTokenClaims {
-        exp,
-        iat,
-        user: token_user,
-    };
-
-    encode(
-        &Header::default(),
-        &claim,
-        &EncodingKey::from_secret("secret".as_ref()),
-    )
+#[derive(Debug, Clone)]
+pub struct Utils {
+    pub auth_secret: String,
+    pub storage_secret: String,
 }
 
-pub fn decode_auth_token(
-    token: &str,
-) -> Result<TokenData<AuthTokenClaims>, jsonwebtoken::errors::Error> {
-    let mut validation = Validation::default();
-    validation.leeway = 0;
+impl Utils {
+    pub fn generate_auth_token(&self, user: User) -> Result<String, jsonwebtoken::errors::Error> {
+        let mut now = Utc::now();
+        let iat = now.timestamp() as usize;
+        let exp_in = Duration::hours(24);
+        now += exp_in;
+        let exp = now.timestamp() as usize;
 
-    decode::<AuthTokenClaims>(
-        token,
-        &DecodingKey::from_secret("secret".as_ref()),
-        &validation,
-    )
+        let token_user = TokenUser {
+            id: user.id,
+            email: user.email,
+        };
+
+        let claim = AuthTokenClaims {
+            exp,
+            iat,
+            user: token_user,
+        };
+
+        encode(
+            &Header::default(),
+            &claim,
+            &EncodingKey::from_secret(self.auth_secret.as_ref()),
+        )
+    }
+
+    pub fn decode_auth_token(
+        &self,
+        token: &str,
+    ) -> Result<TokenData<AuthTokenClaims>, jsonwebtoken::errors::Error> {
+        let mut validation = Validation::default();
+        validation.leeway = 0;
+
+        decode::<AuthTokenClaims>(
+            token,
+            &DecodingKey::from_secret(self.auth_secret.as_ref()),
+            &validation,
+        )
+    }
+
+    pub fn generate_storage_token(
+        &self,
+        token_file: TokenFile,
+        exp_time: i64,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        let mut now = Utc::now();
+        let iat = now.timestamp() as usize;
+        let exp_in = Duration::seconds(exp_time);
+        now += exp_in;
+        let exp = now.timestamp() as usize;
+
+        let claim = StorageTokenClaims {
+            exp,
+            iat,
+            file: token_file,
+        };
+
+        encode(
+            &Header::default(),
+            &claim,
+            &EncodingKey::from_secret(self.storage_secret.as_ref()),
+        )
+    }
+
+    pub fn decode_storage_token(
+        &self,
+        token: &str,
+    ) -> Result<TokenData<StorageTokenClaims>, jsonwebtoken::errors::Error> {
+        let mut validation = Validation::default();
+        validation.leeway = 0;
+
+        decode::<StorageTokenClaims>(
+            token,
+            &DecodingKey::from_secret(self.storage_secret.as_ref()),
+            &validation,
+        )
+    }
 }
 
 pub fn hash_password(password: String) -> String {
@@ -66,42 +113,6 @@ pub fn hash_password(password: String) -> String {
     let hash = hasher.finalize();
 
     format!("{:x}", hash)
-}
-
-pub fn generate_storage_token(
-    token_file: TokenFile,
-    exp_time: i64,
-) -> Result<String, jsonwebtoken::errors::Error> {
-    let mut now = Utc::now();
-    let iat = now.timestamp() as usize;
-    let exp_in = Duration::seconds(exp_time);
-    now += exp_in;
-    let exp = now.timestamp() as usize;
-
-    let claim = StorageTokenClaims {
-        exp,
-        iat,
-        file: token_file,
-    };
-
-    encode(
-        &Header::default(),
-        &claim,
-        &EncodingKey::from_secret("secret".as_ref()),
-    )
-}
-
-pub fn decode_storage_token(
-    token: &str,
-) -> Result<TokenData<StorageTokenClaims>, jsonwebtoken::errors::Error> {
-    let mut validation = Validation::default();
-    validation.leeway = 0;
-
-    decode::<StorageTokenClaims>(
-        token,
-        &DecodingKey::from_secret("secret".as_ref()),
-        &validation,
-    )
 }
 
 pub fn extract_type_from_string(val: &str) -> Value {
