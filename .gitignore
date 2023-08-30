@@ -10,5 +10,5 @@
 
 /target
 /logs
-*.db
+test.db
 *.json
