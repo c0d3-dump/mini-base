@@ -34,7 +34,7 @@ pub async fn start_server(model: Model) {
         .layer(
             CorsLayer::new()
                 .allow_origin(Any)
-                .allow_methods([Method::POST, Method::GET, Method::OPTIONS])
+                .allow_methods(Any)
                 .allow_headers(Any),
         );
 

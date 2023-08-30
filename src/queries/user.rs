@@ -88,7 +88,7 @@ impl Model {
              AS role_id,
              CASE WHEN role_id IS NULL 
               THEN (SELECT name FROM roles WHERE is_default=1) 
-              ELSE roles.id END 
+              ELSE roles.name END 
              AS role_name
              FROM users
              LEFT JOIN roles ON roles.id=role_id

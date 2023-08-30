@@ -43,7 +43,7 @@ async fn signup(State(model): State<Model>, Json(body): Json<Value>) -> (StatusC
             let res = model.create_user(email.to_string(), hashed_password).await;
 
             match res {
-                Ok(_) => (StatusCode::OK, "Signup successfull".to_string()),
+                Ok(_) => (StatusCode::OK, "Signup successful".to_string()),
                 Err(_) => (StatusCode::BAD_REQUEST, "Invalid Credentials".to_string()),
             }
         }
