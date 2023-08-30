@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone)]
 pub struct Offset {
     pub user: i64,
@@ -108,4 +110,12 @@ pub struct UserRoleAccess {
     pub role_id: i64,
     pub name: String,
     pub is_selected: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Setup {
+    pub dbpath: String,
+    pub ips: String,
+    pub auth_secret: String,
+    pub storage_secret: String,
 }

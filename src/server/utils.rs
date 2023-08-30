@@ -24,6 +24,7 @@ pub struct StorageTokenClaims {
 
 #[derive(Debug, Clone)]
 pub struct Utils {
+    pub ips: Vec<String>,
     pub auth_secret: String,
     pub storage_secret: String,
 }

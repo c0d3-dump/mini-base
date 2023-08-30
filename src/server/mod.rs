@@ -1,6 +1,6 @@
 use axum::{
     extract::{Json, Path, Query, State},
-    http::{Method, Request, StatusCode},
+    http::{HeaderValue, Method, Request, StatusCode},
     middleware::{self, Next},
     response::Response,
     routing::{delete, get, post, put},
@@ -26,6 +26,14 @@ pub mod utils;
 
 #[tokio::main]
 pub async fn start_server(model: Model) {
+    let origins = model
+        .utils
+        .ips
+        .clone()
+        .into_iter()
+        .map(|ip| ip.parse().unwrap())
+        .collect::<Vec<HeaderValue>>();
+
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
         .nest("/auth", auth::generate_auth_routes(model.clone()))
@@ -33,7 +41,7 @@ pub async fn start_server(model: Model) {
         .nest("/api", generate_routes(model.clone()))
         .layer(
             CorsLayer::new()
-                .allow_origin(Any)
+                .allow_origin(origins)
                 .allow_methods(Any)
                 .allow_headers(Any),
         );

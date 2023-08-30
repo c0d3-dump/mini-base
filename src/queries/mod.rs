@@ -1,4 +1,5 @@
 use axum_server::Handle;
+use jfs::{Config, Store};
 
 use crate::{database::Conn, server::utils::Utils};
 
@@ -16,6 +17,7 @@ pub struct Model {
     pub offset: Offset,
     pub temp: Temp,
     pub utils: Utils,
+    pub jsondb: Store,
 }
 
 impl Model {
@@ -35,9 +37,19 @@ impl Model {
                 selected_role_access_id: None,
             },
             utils: Utils {
-                auth_secret: "secret".to_string(),
-                storage_secret: "secret".to_string(),
+                auth_secret: String::from(""),
+                storage_secret: String::from(""),
+                ips: vec![],
             },
+            jsondb: jfs::Store::new_with_cfg(
+                "config",
+                Config {
+                    pretty: true,
+                    indent: 4,
+                    single: true,
+                },
+            )
+            .unwrap(),
         }
     }
 }
