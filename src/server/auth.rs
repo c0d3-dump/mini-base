@@ -64,8 +64,6 @@ async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCo
 
     match (email, password) {
         (Some(Value::String(email)), Some(Value::String(password))) => {
-            log::info!("email: {}", email);
-            log::info!("password: {}", password);
             let res = model.get_user_by_email(email.as_str()).await;
 
             match res {
@@ -152,12 +150,12 @@ pub async fn auth_middleware<T>(
                             return Err(StatusCode::UNAUTHORIZED);
                         }
                     }
-                    None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                    None => return Err(StatusCode::UNAUTHORIZED),
                 }
             }
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+            Err(_) => return Err(StatusCode::UNAUTHORIZED),
         },
-        None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        None => return Err(StatusCode::UNAUTHORIZED),
     }
 
     Ok(next.run(req).await)
@@ -190,13 +188,13 @@ pub async fn storage_middleware<T>(
                                     can_delete: role.can_delete,
                                 }));
                             }
-                            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                            Err(_) => return Err(StatusCode::UNAUTHORIZED),
                         }
                     }
-                    None => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                    None => return Err(StatusCode::UNAUTHORIZED),
                 }
             }
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+            Err(_) => return Err(StatusCode::UNAUTHORIZED),
         },
         None => {
             req.extensions_mut().insert(model);

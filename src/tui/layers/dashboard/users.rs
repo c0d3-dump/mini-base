@@ -1,6 +1,6 @@
 use cursive::{
     view::{Nameable, Resizable},
-    views::{Dialog, EditView, NamedView, ResizedView, SelectView},
+    views::{Dialog, EditView, NamedView, ResizedView, SelectView, TextView},
     Cursive,
 };
 
@@ -96,9 +96,6 @@ fn edit_user(s: &mut Cursive, idx: usize) {
 
         match model.temp.selected_role_access_id {
             Some(i) => {
-                log::info!("user id: {}", idx);
-                log::info!("role id: {}", i);
-
                 let res = futures::executor::block_on(model.update_user_role(idx as i64, i));
                 match res {
                     Ok(_) => {}
@@ -118,20 +115,32 @@ fn edit_user(s: &mut Cursive, idx: usize) {
     };
 
     let on_delete = move |s: &mut Cursive| {
-        let model = get_current_mut_model(s);
-        model.temp.selected_role_access_id = None;
+        s.add_layer(
+            Dialog::new()
+                .content(TextView::new(
+                    "Are you sure you want to remove remove user role?",
+                ))
+                .button("cancel", |s: &mut Cursive| {
+                    s.pop_layer();
+                })
+                .button("continue", move |s: &mut Cursive| {
+                    let model = get_current_mut_model(s);
+                    model.temp.selected_role_access_id = None;
 
-        let res = futures::executor::block_on(model.remove_default_user(idx as i64));
-        match res {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
-            }
-        };
+                    let res = futures::executor::block_on(model.remove_default_user(idx as i64));
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            s.add_layer(Dialog::info(e));
+                            return;
+                        }
+                    };
 
-        remove_select_item(s, "user_list", idx);
-        s.pop_layer();
+                    remove_select_item(s, "user_list", idx);
+                    s.pop_layer();
+                    s.pop_layer();
+                }),
+        );
     };
 
     let on_cancel = |s: &mut Cursive| {

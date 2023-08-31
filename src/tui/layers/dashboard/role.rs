@@ -1,7 +1,9 @@
 use cursive::{
     direction::Orientation,
     view::{Nameable, Resizable},
-    views::{Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView},
+    views::{
+        Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView, TextView,
+    },
     Cursive, With,
 };
 
@@ -146,20 +148,31 @@ fn edit_role(s: &mut Cursive, idx: usize) {
     };
 
     let on_delete = move |s: &mut Cursive| {
-        let model = get_current_mut_model(s);
-        let res = futures::executor::block_on(model.delete_role(idx as i64));
+        s.add_layer(
+            Dialog::new()
+                .content(TextView::new(
+                    "Are you sure you want to remove remove role?",
+                ))
+                .button("cancel", |s: &mut Cursive| {
+                    s.pop_layer();
+                })
+                .button("continue", move |s: &mut Cursive| {
+                    let model = get_current_mut_model(s);
+                    let res = futures::executor::block_on(model.delete_role(idx as i64));
 
-        match res {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
-            }
-        };
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            s.add_layer(Dialog::info(e));
+                            return;
+                        }
+                    };
 
-        remove_select_item(s, "role_list", idx);
-
-        s.pop_layer();
+                    remove_select_item(s, "role_list", idx);
+                    s.pop_layer();
+                    s.pop_layer();
+                }),
+        );
     };
 
     let on_cancel = |s: &mut Cursive| {

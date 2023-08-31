@@ -332,31 +332,43 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     };
 
     let on_delete = move |s: &mut Cursive| {
-        let model = get_current_mut_model(s);
-        model.temp.query_written = false;
-        model.temp.query_access_update = false;
+        s.add_layer(
+            Dialog::new()
+                .content(TextView::new(
+                    "Are you sure you want to remove remove query?",
+                ))
+                .button("cancel", |s: &mut Cursive| {
+                    s.pop_layer();
+                })
+                .button("continue", move |s: &mut Cursive| {
+                    let model = get_current_mut_model(s);
+                    model.temp.query_written = false;
+                    model.temp.query_access_update = false;
 
-        let res = futures::executor::block_on(model.delete_query(idx as i64));
+                    let res = futures::executor::block_on(model.delete_query(idx as i64));
 
-        match res {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
-            }
-        };
+                    match res {
+                        Ok(_) => {}
+                        Err(e) => {
+                            s.add_layer(Dialog::info(e));
+                            return;
+                        }
+                    };
 
-        let res = remove_select_item(s, "query_list", idx);
-        match res {
-            Some(i) => {
-                s.call_on_name("server_apis", |list: &mut ListView| {
-                    list.remove_child(i + 6);
-                });
-            }
-            None => {}
-        }
+                    let res = remove_select_item(s, "query_list", idx);
+                    match res {
+                        Some(i) => {
+                            s.call_on_name("server_apis", |list: &mut ListView| {
+                                list.remove_child(i + 6);
+                            });
+                        }
+                        None => {}
+                    }
 
-        s.pop_layer();
+                    s.pop_layer();
+                    s.pop_layer();
+                }),
+        );
     };
 
     let on_cancel = |s: &mut Cursive| {
