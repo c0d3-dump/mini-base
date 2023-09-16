@@ -198,7 +198,7 @@ pub async fn storage_middleware<T>(
         },
         None => {
             req.extensions_mut().insert(model);
-            req.extensions_mut().insert::<Option<User>>(None);
+            req.extensions_mut().insert::<Option<UserStorage>>(None);
         }
     }
 
