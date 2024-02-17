@@ -54,24 +54,20 @@ pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .padding_lrtb(1, 1, 1, 0)
         .button("Add Query", add_query)
         .full_screen()
-        .with_name(Sidebar::QUERY.to_string())
+        .with_name(Sidebar::Query.to_string())
 }
 
 fn edit_query(s: &mut Cursive, idx: usize) {
     let model = get_current_model(s);
 
     let optional_query = futures::executor::block_on(model.get_query_by_id(idx as i64));
-    let query;
-
-    match optional_query {
-        Ok(q) => {
-            query = q;
-        }
+    let query = match optional_query {
+        Ok(q) => q,
         Err(e) => {
             s.add_layer(Dialog::info(e));
             return;
         }
-    }
+    };
 
     let mut list = ListView::new();
     list.add_child(
@@ -109,10 +105,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             s.add_layer(exec_types);
 
             let button_label_ref = get_data_from_refname::<Button>(s, "exec_type_label");
-            let btn_label = button_label_ref
-                .label()
-                .replace(['<', '>'], "")
-                .to_string();
+            let btn_label = button_label_ref.label().replace(['<', '>'], "").to_string();
 
             let items: Vec<(usize, String)> = vec![
                 (0, "get".to_string()),
@@ -309,22 +302,16 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         }
 
         let res = update_select_item(s, "query_list", label.clone(), idx);
-        match res {
-            Some(i) => {
-                s.call_on_name("server_apis", move |list: &mut ListView| {
-                    let l = list.row_mut(i + 6);
-                    match l {
-                        ListChild::Row(_, _) => {
-                            *l = ListChild::Row(
-                                format!("/api/{}", label.clone()),
-                                Box::new(TextView::new(exec_type).align(Align::center_right())),
-                            );
-                        }
-                        _ => {}
-                    }
-                });
-            }
-            None => {}
+        if let Some(i) = res {
+            s.call_on_name("server_apis", move |list: &mut ListView| {
+                let l = list.row_mut(i + 6);
+                if let ListChild::Row(_, _) = l {
+                    *l = ListChild::Row(
+                        format!("/api/{}", label.clone()),
+                        Box::new(TextView::new(exec_type).align(Align::center_right())),
+                    );
+                }
+            });
         }
 
         s.pop_layer();
@@ -355,13 +342,10 @@ fn edit_query(s: &mut Cursive, idx: usize) {
                     };
 
                     let res = remove_select_item(s, "query_list", idx);
-                    match res {
-                        Some(i) => {
-                            s.call_on_name("server_apis", |list: &mut ListView| {
-                                list.remove_child(i + 6);
-                            });
-                        }
-                        None => {}
+                    if let Some(i) = res {
+                        s.call_on_name("server_apis", |list: &mut ListView| {
+                            list.remove_child(i + 6);
+                        });
                     }
 
                     s.pop_layer();

@@ -9,22 +9,22 @@ pub mod mysql;
 pub mod sqlite;
 
 pub enum DbRow {
-    SQLITE(SqliteRow),
-    MYSQL(MySqlRow),
+    Sqlite(SqliteRow),
+    Mysql(MySqlRow),
 }
 
 impl DbRow {
     fn get_sqlite_row(self) -> SqliteRow {
         match self {
-            DbRow::SQLITE(t) => t,
-            DbRow::MYSQL(_) => panic!(),
+            DbRow::Sqlite(t) => t,
+            DbRow::Mysql(_) => panic!(),
         }
     }
 
     fn get_mysql_row(self) -> MySqlRow {
         match self {
-            DbRow::MYSQL(t) => t,
-            DbRow::SQLITE(_) => panic!(),
+            DbRow::Mysql(t) => t,
+            DbRow::Sqlite(_) => panic!(),
         }
     }
 
@@ -36,8 +36,8 @@ impl DbRow {
             + Type<<MySqlRow as Row>::Database>,
     {
         match self {
-            DbRow::SQLITE(row) => row.try_get::<'r, T, _>(idx),
-            DbRow::MYSQL(row) => row.try_get::<'r, T, _>(idx),
+            DbRow::Sqlite(row) => row.try_get::<'r, T, _>(idx),
+            DbRow::Mysql(row) => row.try_get::<'r, T, _>(idx),
         }
     }
 }
@@ -53,7 +53,7 @@ pub struct Conn {
 impl Conn {
     pub fn new(dbtype: DbType, dbpath: &str) -> Self {
         match dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 let sqlite_conn = sqlite::Sqlite::new(dbpath);
                 let sqlite = futures::executor::block_on(sqlite_conn);
 
@@ -64,7 +64,7 @@ impl Conn {
                     err: sqlite.connection.err(),
                 }
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 let mysql_conn = mysql::Mysql::new(dbpath);
                 let mysql = futures::executor::block_on(mysql_conn);
 
@@ -80,10 +80,10 @@ impl Conn {
 
     pub async fn close(&self) {
         match self.dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 self.sqlite.as_ref().unwrap().close().await;
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 self.mysql.as_ref().unwrap().close().await;
             }
         }
@@ -91,17 +91,17 @@ impl Conn {
 
     pub async fn query_all(&self, query: &str, args: Vec<ColType>) -> Result<Vec<DbRow>, String> {
         match self.dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 let res = self.sqlite.as_ref().unwrap().query_all(query, args).await;
                 match res {
-                    Ok(rows) => Ok(rows.into_iter().map(DbRow::SQLITE).collect()),
+                    Ok(rows) => Ok(rows.into_iter().map(DbRow::Sqlite).collect()),
                     Err(e) => Err(e),
                 }
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 let res = self.mysql.as_ref().unwrap().query_all(query, args).await;
                 match res {
-                    Ok(rows) => Ok(rows.into_iter().map(DbRow::MYSQL).collect()),
+                    Ok(rows) => Ok(rows.into_iter().map(DbRow::Mysql).collect()),
                     Err(e) => Err(e),
                 }
             }
@@ -110,17 +110,17 @@ impl Conn {
 
     pub async fn query_one(&self, query: &str, args: Vec<ColType>) -> Result<DbRow, String> {
         match self.dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 let res = self.sqlite.as_ref().unwrap().query_one(query, args).await;
                 match res {
-                    Ok(row) => Ok(DbRow::SQLITE(row)),
+                    Ok(row) => Ok(DbRow::Sqlite(row)),
                     Err(e) => Err(e),
                 }
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 let res = self.mysql.as_ref().unwrap().query_one(query, args).await;
                 match res {
-                    Ok(row) => Ok(DbRow::MYSQL(row)),
+                    Ok(row) => Ok(DbRow::Mysql(row)),
                     Err(e) => Err(e),
                 }
             }
@@ -129,8 +129,8 @@ impl Conn {
 
     pub async fn execute(&self, query: &str, args: Vec<ColType>) -> Result<u64, String> {
         match self.dbtype {
-            DbType::SQLITE => self.sqlite.as_ref().unwrap().execute(query, args).await,
-            DbType::MYSQL => self.mysql.as_ref().unwrap().execute(query, args).await,
+            DbType::Sqlite => self.sqlite.as_ref().unwrap().execute(query, args).await,
+            DbType::Mysql => self.mysql.as_ref().unwrap().execute(query, args).await,
         }
     }
 
@@ -139,14 +139,14 @@ impl Conn {
         T: for<'r> FromRow<'r, SqliteRow> + for<'r> FromRow<'r, MySqlRow> + Unpin + Send,
     {
         match self.dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 self.sqlite
                     .as_ref()
                     .unwrap()
                     .query_all_with_type::<T>(query)
                     .await
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 self.mysql
                     .as_ref()
                     .unwrap()
@@ -161,14 +161,14 @@ impl Conn {
         T: for<'r> FromRow<'r, SqliteRow> + for<'r> FromRow<'r, MySqlRow> + Unpin + Send,
     {
         match self.dbtype {
-            DbType::SQLITE => {
+            DbType::Sqlite => {
                 self.sqlite
                     .as_ref()
                     .unwrap()
                     .query_one_with_type::<T>(query)
                     .await
             }
-            DbType::MYSQL => {
+            DbType::Mysql => {
                 self.mysql
                     .as_ref()
                     .unwrap()
@@ -180,12 +180,12 @@ impl Conn {
 
     pub fn parse_all(&self, rows: Vec<DbRow>) -> Result<Vec<HashMap<String, ColType>>, String> {
         match self.dbtype {
-            DbType::SQLITE => self
+            DbType::Sqlite => self
                 .sqlite
                 .as_ref()
                 .unwrap()
                 .parse_all(rows.into_iter().map(|s| s.get_sqlite_row()).collect()),
-            DbType::MYSQL => self
+            DbType::Mysql => self
                 .mysql
                 .as_ref()
                 .unwrap()

@@ -40,8 +40,7 @@ async fn upload(
     Extension(user_storage): Extension<Option<UserStorage>>,
     mut multipart: Multipart,
 ) -> (StatusCode, String) {
-    let user_id;
-    match user_storage {
+    let user_id = match user_storage {
         Some(user) => {
             if !user.can_write {
                 return (
@@ -49,10 +48,10 @@ async fn upload(
                     "Unauthorized to upload file".to_string(),
                 );
             }
-            user_id = user.id;
+            user.id
         }
         None => return (StatusCode::UNAUTHORIZED, "please login first".to_string()),
-    }
+    };
 
     let mut ids = vec![];
     while let Some(field) = match multipart.next_field().await {
@@ -72,7 +71,7 @@ async fn upload(
 
         let save_path = format!("uploads/{}", &generated_name);
 
-        if let Err(_) = save_file(field, &save_path).await {
+        if save_file(field, &save_path).await.is_err() {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "error saving file".to_string(),
@@ -147,7 +146,7 @@ async fn delete(
 
     match model.delete_file(file_id).await {
         Ok(r) => {
-            if r <= 0 {
+            if r == 0 {
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "error deleting file".to_string(),
@@ -227,15 +226,12 @@ async fn get_file(
     Extension(model): Extension<Model>,
     Query(query): Query<HashMap<String, String>>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let token;
-    match query.get("token") {
-        Some(t) => {
-            token = t;
-        }
+    let token = match query.get("token") {
+        Some(t) => t,
         None => {
             return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
-    }
+    };
 
     match model.utils.decode_storage_token(token) {
         Ok(token_file) => {
@@ -249,19 +245,13 @@ async fn get_file(
             };
 
             let mut content = Vec::new();
-            if let Err(_) = file.read_to_end(&mut content).await {
+            if file.read_to_end(&mut content).await.is_err() {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
 
-            let mime_type;
-            match mime_guess::from_path(file_path).first_raw() {
-                Some(mt) => {
-                    mime_type = mt;
-                }
-                None => {
-                    mime_type = "application/octet-stream";
-                }
-            }
+            let mime_type = mime_guess::from_path(file_path)
+                .first_raw()
+                .unwrap_or("application/octet-stream");
 
             let response = Response::builder()
                 .header("Content-Type", mime_type)

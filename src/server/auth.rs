@@ -134,7 +134,7 @@ pub async fn auth_middleware(
     let role_access;
     match optional_role_access {
         Ok(ra) => {
-            if ra.len() <= 0 {
+            if ra.is_empty() {
                 req.extensions_mut().insert::<Option<User>>(None);
                 return Ok(next.run(req).await);
             }

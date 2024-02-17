@@ -26,11 +26,8 @@ pub fn select_dbtype(s: &mut Cursive) {
             .map(|(_, x)| x)
             .next();
 
-        match optional_dbtype {
-            Some(dbtype) => {
-                setup_db_connection(s, dbtype);
-            }
-            None => {}
+        if let Some(dbtype) = optional_dbtype {
+            setup_db_connection(s, dbtype);
         }
     };
 
@@ -115,22 +112,18 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
     };
 
     let model = get_current_mut_model(s);
-    let setup_data: Setup;
-    match model.jsondb.get::<Setup>("setup") {
-        Ok(data) => {
-            setup_data = data;
-        }
+    let setup_data: Setup = match model.jsondb.get::<Setup>("setup") {
+        Ok(data) => data,
         Err(e) => {
             log::error!("{:#?}", e);
-
-            setup_data = Setup {
+            Setup {
                 dbpath: "".to_string(),
                 ips: "".to_string(),
                 auth_secret: "".to_string(),
                 storage_secret: "".to_string(),
-            };
+            }
         }
-    }
+    };
 
     let mut list = ListView::new();
 

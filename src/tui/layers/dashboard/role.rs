@@ -49,24 +49,20 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .padding_lrtb(1, 1, 1, 0)
         .button("Add Role", add_role)
         .full_screen()
-        .with_name(Sidebar::ROLE.to_string())
+        .with_name(Sidebar::Role.to_string())
 }
 
 fn edit_role(s: &mut Cursive, idx: usize) {
     let model = get_current_mut_model(s);
 
     let optional_role = futures::executor::block_on(model.get_role_by_id(idx as i64));
-    let role;
-
-    match optional_role {
-        Ok(r) => {
-            role = r;
-        }
+    let role = match optional_role {
+        Ok(r) => r,
         Err(e) => {
             s.add_layer(Dialog::info(e));
             return;
         }
-    }
+    };
 
     let mut list = ListView::new();
     list.add_child(

@@ -1,3 +1,5 @@
+use std::cmp;
+
 use crate::database::model::ColType;
 
 use super::{
@@ -167,10 +169,7 @@ impl Model {
         for q in insertable {
             let query = "INSERT INTO role_access(role_id, query_id) VALUES(?, ?)";
 
-            let args = vec![
-                ColType::Integer(Some(q)),
-                ColType::Integer(Some(query_id)),
-            ];
+            let args = vec![ColType::Integer(Some(q)), ColType::Integer(Some(query_id))];
             let res = self.conn.as_ref().unwrap().execute(query, args).await;
             match res {
                 Ok(_) => {}
@@ -183,10 +182,7 @@ impl Model {
         for q in deletable {
             let query = "DELETE FROM role_access WHERE role_id=? AND query_id=?";
 
-            let args = vec![
-                ColType::Integer(Some(q)),
-                ColType::Integer(Some(query_id)),
-            ];
+            let args = vec![ColType::Integer(Some(q)), ColType::Integer(Some(query_id))];
             let res = self.conn.as_ref().unwrap().execute(query, args).await;
             match res {
                 Ok(_) => {}
@@ -211,15 +207,19 @@ fn remaining_ids(arr1: Vec<i64>, arr2: Vec<i64>) -> (Vec<i64>, Vec<i64>) {
     let mut deletable: Vec<i64> = vec![];
 
     while i < len1 && j < len2 {
-        if arr1[i] == arr2[j] {
-            i += 1;
-            j += 1;
-        } else if arr1[i] < arr2[j] {
-            deletable.push(arr1[i]);
-            i += 1;
-        } else {
-            insertable.push(arr2[j]);
-            j += 1;
+        match &arr1[i].cmp(&arr2[j]) {
+            cmp::Ordering::Equal => {
+                i += 1;
+                j += 1;
+            }
+            cmp::Ordering::Less => {
+                deletable.push(arr1[i]);
+                i += 1;
+            }
+            cmp::Ordering::Greater => {
+                insertable.push(arr2[j]);
+                j += 1;
+            }
         }
     }
 

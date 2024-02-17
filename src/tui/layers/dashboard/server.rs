@@ -17,7 +17,7 @@ pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .content(apis.with_name("server_apis").scrollable())
         .padding_lrtb(1, 1, 1, 0)
         .full_screen()
-        .with_name(Sidebar::SERVER.to_string())
+        .with_name(Sidebar::Server.to_string())
 }
 
 fn update_apis(s: &mut Cursive, mut apis: ListView) -> ListView {

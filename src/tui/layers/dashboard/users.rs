@@ -46,7 +46,7 @@ pub fn users_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .padding_lrtb(1, 1, 1, 0)
         .button("Add User", add_user)
         .full_screen()
-        .with_name(Sidebar::USERS.to_string())
+        .with_name(Sidebar::Users.to_string())
 }
 
 fn edit_user(s: &mut Cursive, idx: usize) {
@@ -54,17 +54,13 @@ fn edit_user(s: &mut Cursive, idx: usize) {
 
     let optional_role_access =
         futures::executor::block_on(model.get_user_role_access_by_id(idx as i64));
-    let role_access;
-
-    match optional_role_access {
-        Ok(r) => {
-            role_access = r;
-        }
+    let role_access = match optional_role_access {
+        Ok(r) => r,
         Err(e) => {
             s.add_layer(Dialog::info(e));
             return;
         }
-    }
+    };
 
     let on_select = |s: &mut Cursive, idx: &usize| {
         let model = get_current_mut_model(s);
@@ -73,12 +69,9 @@ fn edit_user(s: &mut Cursive, idx: usize) {
         let select_ref = get_data_from_refname::<SelectView<usize>>(s, "role_access_list");
         let optional_role_name = select_ref.iter().find(|(_, sr)| *sr == idx);
 
-        match optional_role_name {
-            Some((role_name, _)) => {
-                let mut dialog_ref = get_data_from_refname::<Dialog>(s, "user_access_role");
-                dialog_ref.set_title(role_name);
-            }
-            None => {}
+        if let Some((role_name, _)) = optional_role_name {
+            let mut dialog_ref = get_data_from_refname::<Dialog>(s, "user_access_role");
+            dialog_ref.set_title(role_name);
         }
     };
 
@@ -94,18 +87,15 @@ fn edit_user(s: &mut Cursive, idx: usize) {
     let on_submit = move |s: &mut Cursive| {
         let model = get_current_mut_model(s);
 
-        match model.temp.selected_role_access_id {
-            Some(i) => {
-                let res = futures::executor::block_on(model.update_user_role(idx as i64, i));
-                match res {
-                    Ok(_) => {}
-                    Err(e) => {
-                        s.add_layer(Dialog::info(e));
-                        return;
-                    }
+        if let Some(i) = model.temp.selected_role_access_id {
+            let res = futures::executor::block_on(model.update_user_role(idx as i64, i));
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    s.add_layer(Dialog::info(e));
+                    return;
                 }
             }
-            None => {}
         }
 
         let model = get_current_mut_model(s);
@@ -167,22 +157,16 @@ fn edit_user(s: &mut Cursive, idx: usize) {
         .enumerate()
         .find(|(_, ra)| ra.is_selected);
 
-    match selected_role_access_id {
-        Some((i, _)) => {
-            role_access_ref.set_selection(i);
-        }
-        None => {}
+    if let Some((i, _)) = selected_role_access_id {
+        role_access_ref.set_selection(i);
     }
 
     let mut dialog_ref = get_data_from_refname::<Dialog>(s, "user_access_role");
-    match selected_role_access_id {
-        Some((_, n)) => {
-            dialog_ref.set_title(n.name.to_string());
+    if let Some((_, n)) = selected_role_access_id {
+        dialog_ref.set_title(n.name.to_string());
 
-            let model = get_current_mut_model(s);
-            model.temp.selected_role_access_id = Some(n.role_id);
-        }
-        None => {}
+        let model = get_current_mut_model(s);
+        model.temp.selected_role_access_id = Some(n.role_id);
     }
 }
 

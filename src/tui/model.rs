@@ -4,21 +4,21 @@ use enum_iterator::Sequence;
 
 #[derive(Debug, Clone, PartialEq, Sequence)]
 pub enum Sidebar {
-    ROLE,
-    USERS,
-    QUERY,
-    SERVER,
-    QUIT,
+    Role,
+    Users,
+    Query,
+    Server,
+    Quit,
 }
 
 impl fmt::Display for Sidebar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Sidebar::ROLE => write!(f, "ROLE"),
-            Sidebar::USERS => write!(f, "USERS"),
-            Sidebar::QUERY => write!(f, "QUERY"),
-            Sidebar::SERVER => write!(f, "SERVER"),
-            Sidebar::QUIT => write!(f, "QUIT"),
+            Sidebar::Role => write!(f, "ROLE"),
+            Sidebar::Users => write!(f, "USERS"),
+            Sidebar::Query => write!(f, "QUERY"),
+            Sidebar::Server => write!(f, "SERVER"),
+            Sidebar::Quit => write!(f, "QUIT"),
         }
     }
 }

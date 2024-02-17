@@ -1,11 +1,6 @@
 use cursive::theme::{BorderStyle, Color, Palette, PaletteColor, Theme};
 
 pub fn get_theme() -> Theme {
-    let mut theme = Theme::default();
-
-    theme.shadow = false;
-    theme.borders = BorderStyle::Simple;
-
     let mut palette = Palette::default();
 
     palette[PaletteColor::Background] = Color::parse("#000000").unwrap();
@@ -22,7 +17,9 @@ pub fn get_theme() -> Theme {
     palette[PaletteColor::Highlight] = Color::parse("#ff00ff").unwrap();
     palette[PaletteColor::HighlightInactive] = Color::parse("#5555FF").unwrap();
 
-    theme.palette = palette;
-
-    theme
+    Theme {
+        shadow: false,
+        borders: BorderStyle::Simple,
+        palette,
+    }
 }

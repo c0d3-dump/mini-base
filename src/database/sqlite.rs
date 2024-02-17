@@ -16,16 +16,10 @@ pub struct Sqlite {
 
 impl Sqlite {
     pub async fn new(dbpath: &str) -> Self {
-        match File::open(dbpath) {
-            Err(_) => match File::create(dbpath) {
-                Err(_) => {
-                    return Self {
-                        connection: Err("Error creating file".to_string()),
-                    };
-                }
-                _ => {}
-            },
-            _ => {}
+        if File::open(dbpath).is_err() && File::create(dbpath).is_err() {
+            return Self {
+                connection: Err("Error creating file".to_string()),
+            };
         }
 
         let opt_connection = SqlitePoolOptions::new().connect(dbpath).await;

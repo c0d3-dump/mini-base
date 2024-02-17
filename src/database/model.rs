@@ -33,15 +33,15 @@ pub struct ColInfo {
 #[derive(Debug, Clone, Default, PartialEq, Sequence)]
 pub enum DbType {
     #[default]
-    SQLITE,
-    MYSQL,
+    Sqlite,
+    Mysql,
 }
 
 impl fmt::Display for DbType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            DbType::SQLITE => write!(f, "SQLITE"),
-            DbType::MYSQL => write!(f, "MYSQL"),
+            DbType::Sqlite => write!(f, "SQLITE"),
+            DbType::Mysql => write!(f, "MYSQL"),
         }
     }
 }

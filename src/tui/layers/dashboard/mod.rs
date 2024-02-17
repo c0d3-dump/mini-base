@@ -34,7 +34,7 @@ pub fn display_dashboard(s: &mut Cursive) {
 
         match optional_sidebar {
             Some(sidebar) => {
-                if sidebar == Sidebar::QUIT {
+                if sidebar == Sidebar::Quit {
                     let model = get_current_mut_model(s);
 
                     match &model.handle {
