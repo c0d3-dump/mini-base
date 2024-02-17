@@ -6,7 +6,7 @@ use cursive::{
 
 pub fn editor_componant<F>(refname: &str, title: &str, cb: F, content: String) -> impl View
 where
-    F: Fn(&mut Cursive) + 'static,
+    F: Fn(&mut Cursive) + 'static + std::marker::Send + std::marker::Sync,
 {
     let textarea = TextArea::new();
 

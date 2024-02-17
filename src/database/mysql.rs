@@ -190,7 +190,7 @@ impl Mysql {
             Err(e) => panic!("{}", e),
         };
 
-        let r_out: Result<Vec<T>, Error> = query_as(&query).fetch_all(conn).await;
+        let r_out: Result<Vec<T>, Error> = query_as(query).fetch_all(conn).await;
 
         match r_out {
             Ok(out) => Ok(out),
@@ -207,7 +207,7 @@ impl Mysql {
             Err(e) => panic!("{}", e),
         };
 
-        let r_out: Result<T, Error> = query_as(&query).fetch_one(conn).await;
+        let r_out: Result<T, Error> = query_as(query).fetch_one(conn).await;
 
         match r_out {
             Ok(out) => Ok(out),

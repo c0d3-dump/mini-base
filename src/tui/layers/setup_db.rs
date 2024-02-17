@@ -94,7 +94,7 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
                 model.conn = Some(conn);
                 model.handle = Some(Handle::new());
 
-                model.utils.ips = ips.split(",").map(|ip| ip.to_string()).collect();
+                model.utils.ips = ips.split(',').map(|ip| ip.to_string()).collect();
                 model.utils.auth_secret = auth_secret;
                 model.utils.storage_secret = storage_secret;
 

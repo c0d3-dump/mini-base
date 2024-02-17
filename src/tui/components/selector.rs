@@ -6,7 +6,7 @@ use cursive::{
 
 pub fn select_component<F>(items: Vec<(usize, String)>, refname: &str, cb: F) -> impl View
 where
-    F: Fn(&mut Cursive, &usize) + 'static,
+    F: Fn(&mut Cursive, &usize) + 'static + std::marker::Sync + std::marker::Send,
 {
     let mut selectview = SelectView::new();
 
@@ -33,7 +33,7 @@ pub fn update_select_item(
         .iter()
         .enumerate()
         .filter(|(_, (_, val))| *val == &idx)
-        .map(|(i, (_, j))| (i, j.clone()))
+        .map(|(i, (_, j))| (i, *j))
         .collect::<Vec<(usize, usize)>>();
 
     let temp_idx = binding.first();

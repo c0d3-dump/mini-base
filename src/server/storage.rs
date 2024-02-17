@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use crate::queries::{model::UserStorage, Model};
 use axum::{
-    body::{Bytes, Full},
+    body::Body,
     extract::Query,
     http::StatusCode,
-    middleware::{self},
+    middleware,
     response::{IntoResponse, Response},
     routing::{get, post},
     Extension, Json, Router,
@@ -66,7 +66,7 @@ async fn upload(
     } {
         let file_name = field.file_name().unwrap().to_string();
 
-        let filename_arr = file_name.split(".").collect::<Vec<&str>>();
+        let filename_arr = file_name.split('.').collect::<Vec<&str>>();
         let random_id = uuid::Uuid::new_v4().to_string();
         let generated_name = format!("{}.{}", random_id, filename_arr.last().unwrap());
 
@@ -208,22 +208,18 @@ async fn generate_token(
             match optional_token {
                 Ok(token) => {
                     let url = format!("http://localhost:3456/storage/get?token={}", token);
-                    return (StatusCode::OK, url);
+                    (StatusCode::OK, url)
                 }
-                Err(_) => {
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        "error generating token".to_string(),
-                    );
-                }
+                Err(_) => (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "error generating token".to_string(),
+                ),
             }
         }
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "error generating token".to_string(),
-            );
-        }
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "error generating token".to_string(),
+        ),
     }
 }
 
@@ -269,16 +265,14 @@ async fn get_file(
 
             let response = Response::builder()
                 .header("Content-Type", mime_type)
-                .body(Full::new(Bytes::from(content)));
+                .body(Body::from(content));
 
             match response {
-                Ok(r) => return Ok(r),
-                Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+                Ok(r) => Ok(r),
+                Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
             }
         }
-        Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
-        }
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
 

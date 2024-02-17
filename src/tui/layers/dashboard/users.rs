@@ -165,7 +165,7 @@ fn edit_user(s: &mut Cursive, idx: usize) {
     let selected_role_access_id = role_access
         .iter()
         .enumerate()
-        .find(|(_, ra)| ra.is_selected == true);
+        .find(|(_, ra)| ra.is_selected);
 
     match selected_role_access_id {
         Some((i, _)) => {
@@ -201,9 +201,8 @@ fn add_user(s: &mut Cursive) {
             }
             Err(e) => {
                 s.add_layer(Dialog::info(e));
-                return;
             }
-        };
+        }
     };
 
     let on_cancel = |s: &mut Cursive| {

@@ -206,9 +206,8 @@ fn add_role(s: &mut Cursive) {
             }
             Err(e) => {
                 s.add_layer(Dialog::info(e));
-                return;
             }
-        };
+        }
     };
 
     let on_cancel = |s: &mut Cursive| {

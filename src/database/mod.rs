@@ -94,14 +94,14 @@ impl Conn {
             DbType::SQLITE => {
                 let res = self.sqlite.as_ref().unwrap().query_all(query, args).await;
                 match res {
-                    Ok(rows) => Ok(rows.into_iter().map(|r| DbRow::SQLITE(r)).collect()),
+                    Ok(rows) => Ok(rows.into_iter().map(DbRow::SQLITE).collect()),
                     Err(e) => Err(e),
                 }
             }
             DbType::MYSQL => {
                 let res = self.mysql.as_ref().unwrap().query_all(query, args).await;
                 match res {
-                    Ok(rows) => Ok(rows.into_iter().map(|r| DbRow::MYSQL(r)).collect()),
+                    Ok(rows) => Ok(rows.into_iter().map(DbRow::MYSQL).collect()),
                     Err(e) => Err(e),
                 }
             }

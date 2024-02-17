@@ -1,4 +1,5 @@
 use axum::{
+    body::Body,
     extract::{Json, Path, Query, State},
     http::{HeaderValue, Method, Request, StatusCode},
     middleware::{self, Next},
@@ -8,6 +9,7 @@ use axum::{
 };
 use serde_json::{json, Value};
 use std::{collections::HashMap, net::SocketAddr};
+use tower_cookies::CookieManagerLayer;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
@@ -39,6 +41,7 @@ pub async fn start_server(model: Model) {
         .nest("/auth", auth::generate_auth_routes(model.clone()))
         .nest("/storage", storage::generate_storage_routes(model.clone()))
         .nest("/api", generate_routes(model.clone()))
+        .layer(CookieManagerLayer::new())
         .layer(
             CorsLayer::new()
                 .allow_origin(origins)
@@ -65,11 +68,11 @@ fn generate_routes(model: Model) -> Router {
         .route_layer(middleware::from_fn_with_state(model, name_middleware))
 }
 
-async fn name_middleware<T>(
+async fn name_middleware(
     State(model): State<Model>,
     Path(name): Path<String>,
-    mut req: Request<T>,
-    next: Next<T>,
+    mut req: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     log::info!("endpoint: {}", &name);
 
@@ -97,7 +100,7 @@ async fn name_middleware<T>(
         }
     }
 
-    return Ok(next.run(req).await);
+    Ok(next.run(req).await)
 }
 
 async fn get_handler(
@@ -165,7 +168,7 @@ async fn handler(
                 .clone()
                 .into_iter()
                 .filter_map(|p| {
-                    if p.starts_with(".") && !optional_user.is_none() {
+                    if p.starts_with('.') && optional_user.is_some() {
                         match &optional_user {
                             Some(user) => {
                                 let map = HashMap::from([
@@ -179,25 +182,19 @@ async fn handler(
                                         ColType::String(user.role.clone()),
                                     ),
                                 ]);
-                                match map.get(&p) {
-                                    Some(m) => Some(m.clone()),
-                                    None => None,
-                                }
+                                map.get(&p).cloned()
                             }
                             None => None,
                         }
                     } else {
-                        match data.get(&p).clone() {
-                            Some(p) => Some(match p.clone() {
-                                Value::Bool(t) => ColType::Bool(Some(t)),
-                                Value::Number(t) => ColType::Real(t.as_f64()),
-                                Value::String(t) => ColType::String(Some(t)),
-                                Value::Array(_) => todo!(),
-                                Value::Object(_) => todo!(),
-                                Value::Null => ColType::Bool(None),
-                            }),
-                            None => None,
-                        }
+                        data.get(&p).map(|p| match p.clone() {
+                            Value::Bool(t) => ColType::Bool(Some(t)),
+                            Value::Number(t) => ColType::Real(t.as_f64()),
+                            Value::String(t) => ColType::String(Some(t)),
+                            Value::Array(_) => todo!(),
+                            Value::Object(_) => todo!(),
+                            Value::Null => ColType::Bool(None),
+                        })
                     }
                 })
                 .collect::<Vec<ColType>>();

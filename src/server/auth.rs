@@ -1,12 +1,15 @@
 use axum::{
+    body::Body,
     extract::State,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode},
     middleware::Next,
     response::Response,
     routing::post,
     Extension, Json, Router,
 };
+use cookie::time::{Duration, OffsetDateTime};
 use serde_json::Value;
+use tower_cookies::{Cookie, Cookies};
 
 use crate::queries::{
     model::{User, UserId, UserStorage},
@@ -51,7 +54,11 @@ async fn signup(State(model): State<Model>, Json(body): Json<Value>) -> (StatusC
     }
 }
 
-async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCode, String) {
+async fn login(
+    State(model): State<Model>,
+    cookies: Cookies,
+    Json(body): Json<Value>,
+) -> (StatusCode, String) {
     let email = body.get("email");
     let password = body.get("password");
 
@@ -77,13 +84,21 @@ async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCo
                         )
                     } else {
                         let token = model.utils.generate_auth_token(user.clone()).unwrap();
-                        let role = user.role;
+
+                        let mut cookie = Cookie::new("auth", token);
+                        cookie.set_http_only(true);
+                        cookie.set_path("/");
+
+                        let mut fut = OffsetDateTime::now_utc();
+                        fut += Duration::days(7);
+                        cookie.set_expires(fut);
+
+                        cookies.add(cookie);
 
                         let res_user = ResponseUser {
                             id: user.id,
                             email: user.email,
-                            role,
-                            token,
+                            role: user.role,
                         };
 
                         (StatusCode::OK, serde_json::to_string(&res_user).unwrap())
@@ -99,15 +114,20 @@ async fn login(State(model): State<Model>, Json(body): Json<Value>) -> (StatusCo
     }
 }
 
-async fn logout() -> (StatusCode, String) {
+async fn logout(cookies: Cookies) -> (StatusCode, String) {
+    let mut cookie = Cookie::from("auth");
+    cookie.set_path("/");
+    cookies.remove(cookie);
+
     (StatusCode::OK, "logout successfully".to_string())
 }
 
-pub async fn auth_middleware<T>(
+pub async fn auth_middleware(
     Extension(model): Extension<Model>,
     Extension(query_id): Extension<i64>,
-    mut req: Request<T>,
-    next: Next<T>,
+    cookies: Cookies,
+    mut req: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     let optional_role_access = model.get_all_role_access_by_query_id(query_id).await;
 
@@ -125,77 +145,74 @@ pub async fn auth_middleware<T>(
         }
     }
 
-    match req.headers().get(header::AUTHORIZATION) {
-        Some(auth_token) => match auth_token.to_str() {
-            Ok(token) => {
-                let optional_user = authorize_current_user(&model, token).await;
-                match optional_user {
-                    Some(user) => {
-                        if user.role_id.is_none() {
-                            return Err(StatusCode::UNAUTHORIZED);
-                        }
-                        if role_access
-                            .into_iter()
-                            .map(|ra| ra.role_id)
-                            .collect::<Vec<i64>>()
-                            .contains(&user.role_id.unwrap())
-                        {
-                            req.extensions_mut().insert(Some(User {
-                                id: user.id,
-                                email: user.email,
-                                password: user.password,
-                                role: user.role_name,
-                            }));
-                        } else {
-                            return Err(StatusCode::UNAUTHORIZED);
-                        }
+    match cookies.get("auth") {
+        Some(cookie) => {
+            let token = cookie.value();
+            let optional_user = authorize_current_user(&model, token).await;
+            match optional_user {
+                Some(user) => {
+                    if user.role_id.is_none() {
+                        return Err(StatusCode::UNAUTHORIZED);
                     }
-                    None => return Err(StatusCode::UNAUTHORIZED),
+                    if role_access
+                        .into_iter()
+                        .map(|ra| ra.role_id)
+                        .collect::<Vec<i64>>()
+                        .contains(&user.role_id.unwrap())
+                    {
+                        req.extensions_mut().insert(Some(User {
+                            id: user.id,
+                            email: user.email,
+                            password: user.password,
+                            role: user.role_name,
+                        }));
+                    } else {
+                        return Err(StatusCode::UNAUTHORIZED);
+                    }
                 }
+                None => return Err(StatusCode::UNAUTHORIZED),
             }
-            Err(_) => return Err(StatusCode::UNAUTHORIZED),
-        },
+        }
         None => return Err(StatusCode::UNAUTHORIZED),
     }
 
     Ok(next.run(req).await)
 }
 
-pub async fn storage_middleware<T>(
+pub async fn storage_middleware(
     State(model): State<Model>,
-    mut req: Request<T>,
-    next: Next<T>,
+    cookies: Cookies,
+    mut req: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
-    match req.headers().get(header::AUTHORIZATION) {
-        Some(auth_token) => match auth_token.to_str() {
-            Ok(token) => {
-                let optional_user = authorize_current_user(&model, token).await;
-                match optional_user {
-                    Some(user) => {
-                        if user.role_id.is_none() {
-                            return Err(StatusCode::UNAUTHORIZED);
-                        }
-
-                        let optional_access = model.get_role_by_id(user.role_id.unwrap()).await;
-                        match optional_access {
-                            Ok(role) => {
-                                req.extensions_mut().insert(model);
-                                req.extensions_mut().insert(Some(UserStorage {
-                                    id: user.id,
-                                    role_id: user.role_id,
-                                    can_read: role.can_read,
-                                    can_write: role.can_write,
-                                    can_delete: role.can_delete,
-                                }));
-                            }
-                            Err(_) => return Err(StatusCode::UNAUTHORIZED),
-                        }
+    match cookies.get("auth") {
+        Some(cookie) => {
+            let token = cookie.value();
+            let optional_user = authorize_current_user(&model, token).await;
+            match optional_user {
+                Some(user) => {
+                    if user.role_id.is_none() {
+                        return Err(StatusCode::UNAUTHORIZED);
                     }
-                    None => return Err(StatusCode::UNAUTHORIZED),
+
+                    let optional_access = model.get_role_by_id(user.role_id.unwrap()).await;
+                    match optional_access {
+                        Ok(role) => {
+                            req.extensions_mut().insert(model);
+                            req.extensions_mut().insert(Some(UserStorage {
+                                id: user.id,
+                                role_id: user.role_id,
+                                can_read: role.can_read,
+                                can_write: role.can_write,
+                                can_delete: role.can_delete,
+                            }));
+                        }
+                        Err(_) => return Err(StatusCode::UNAUTHORIZED),
+                    }
                 }
+                None => return Err(StatusCode::UNAUTHORIZED),
             }
-            Err(_) => return Err(StatusCode::UNAUTHORIZED),
-        },
+        }
         None => {
             req.extensions_mut().insert(model);
             req.extensions_mut().insert::<Option<UserStorage>>(None);

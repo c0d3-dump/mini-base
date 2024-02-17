@@ -24,7 +24,6 @@ pub struct LoginUserSchema {
 pub struct ResponseUser {
     pub id: i64,
     pub email: String,
-    pub token: String,
     pub role: Option<String>,
 }
 

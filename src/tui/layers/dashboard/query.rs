@@ -111,8 +111,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             let button_label_ref = get_data_from_refname::<Button>(s, "exec_type_label");
             let btn_label = button_label_ref
                 .label()
-                .replace("<", "")
-                .replace(">", "")
+                .replace(['<', '>'], "")
                 .to_string();
 
             let items: Vec<(usize, String)> = vec![
@@ -122,7 +121,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
                 (3, "delete".to_string()),
             ];
 
-            let optional_i = items.iter().find(|(_, f)| f.to_string() == btn_label);
+            let optional_i = items.iter().find(|(_, f)| *f == btn_label);
             match optional_i {
                 Some((i, _)) => {
                     let mut exec_type_ref =
@@ -254,7 +253,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
 
         let mut exec_type: String = "get".to_string();
         s.call_on_name("exec_type_label", |v: &mut Button| {
-            exec_type = v.label().replace("<", "").replace(">", "").to_string();
+            exec_type = v.label().replace(['<', '>'], "").to_string();
         });
 
         let model = get_current_mut_model(s);
@@ -414,9 +413,8 @@ fn add_query(s: &mut Cursive) {
             }
             Err(e) => {
                 s.add_layer(Dialog::info(e));
-                return;
             }
-        };
+        }
     };
 
     let on_cancel = |s: &mut Cursive| {

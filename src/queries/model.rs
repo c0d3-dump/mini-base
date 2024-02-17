@@ -42,7 +42,7 @@ pub struct DefaultRole {
     pub role: Option<String>,
 }
 
-#[derive(Debug, Clone, sqlx::FromRow)]
+#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct User {
     pub id: i64,
     pub email: String,

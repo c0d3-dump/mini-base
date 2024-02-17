@@ -169,7 +169,7 @@ impl Model {
 
             let args = vec![
                 ColType::Integer(Some(q)),
-                ColType::Integer(Some(query_id.clone())),
+                ColType::Integer(Some(query_id)),
             ];
             let res = self.conn.as_ref().unwrap().execute(query, args).await;
             match res {
@@ -185,7 +185,7 @@ impl Model {
 
             let args = vec![
                 ColType::Integer(Some(q)),
-                ColType::Integer(Some(query_id.clone())),
+                ColType::Integer(Some(query_id)),
             ];
             let res = self.conn.as_ref().unwrap().execute(query, args).await;
             match res {
