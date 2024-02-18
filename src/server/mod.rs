@@ -1,14 +1,15 @@
 use axum::{
     body::Body,
     extract::{Json, Path, Query, State},
-    http::{HeaderValue, Method, Request, StatusCode},
+    http::{HeaderValue, Method, Request, StatusCode, Uri},
     middleware::{self, Next},
     response::Response,
     routing::{delete, get, post, put},
-    Extension, Router,
+    Extension, Router, ServiceExt,
 };
 use serde_json::{json, Value};
 use std::{collections::HashMap, net::SocketAddr};
+use tower::Layer;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -28,7 +29,7 @@ pub mod utils;
 
 #[tokio::main]
 pub async fn start_server(model: Model) {
-    let origins = model
+    let origins: Vec<HeaderValue> = model
         .utils
         .ips
         .clone()
@@ -49,11 +50,32 @@ pub async fn start_server(model: Model) {
                 .allow_headers(Any),
         );
 
-    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], 3456));
+    fn rewrite_request_uri<B>(mut req: Request<B>) -> Request<B> {
+        let inp = req.uri();
+        let tp = inp.path();
 
+        let rem = tp.replacen("/api/", "", 1);
+
+        let path = rem.replace('/', "_");
+
+        let mut uri = format!("/api/{}", path);
+
+        if let Some(q) = inp.query() {
+            uri += "?";
+            uri += q;
+        }
+
+        *req.uri_mut() = uri.parse::<Uri>().unwrap();
+
+        req
+    }
+
+    let middleware = tower::util::MapRequestLayer::new(rewrite_request_uri);
+
+    let addr = SocketAddr::from(([0, 0, 0, 0, 0, 0, 0, 0], 3456));
     axum_server::bind(addr)
         .handle(model.handle.unwrap())
-        .serve(app.into_make_service())
+        .serve(middleware.layer(app).into_make_service())
         .await
         .unwrap();
 }
@@ -74,9 +96,10 @@ async fn name_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    log::info!("endpoint: {}", &name);
+    let modified_name = &name.clone().replace('_', "/");
+    log::info!("endpoint: {}", &modified_name);
 
-    let optional_query = model.get_query_by_name(&name).await;
+    let optional_query = model.get_query_by_name(modified_name).await;
 
     match optional_query {
         Ok(query) => {
@@ -201,7 +224,7 @@ async fn handler(
 
             run_query(model, parsed_query, args).await
         }
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
+        Err(e) => (StatusCode::NOT_FOUND, e),
     }
 }
 

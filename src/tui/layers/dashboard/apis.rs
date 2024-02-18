@@ -7,17 +7,17 @@ use cursive::{
 
 use crate::tui::{model::Sidebar, utils::get_current_mut_model};
 
-pub fn server_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
+pub fn apis_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
     let apis = ListView::new();
 
     let apis = update_apis(s, apis);
 
     Dialog::new()
-        .title("Server")
+        .title("Apis")
         .content(apis.with_name("server_apis").scrollable())
         .padding_lrtb(1, 1, 1, 0)
         .full_screen()
-        .with_name(Sidebar::Server.to_string())
+        .with_name(Sidebar::Apis.to_string())
 }
 
 fn update_apis(s: &mut Cursive, mut apis: ListView) -> ListView {

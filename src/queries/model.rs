@@ -115,6 +115,10 @@ pub struct UserRoleAccess {
 #[derive(Serialize, Deserialize)]
 pub struct Setup {
     pub dbpath: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Config {
     pub ips: String,
     pub auth_secret: String,
     pub storage_secret: String,

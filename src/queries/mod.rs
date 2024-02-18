@@ -37,8 +37,8 @@ impl Model {
                 selected_role_access_id: None,
             },
             utils: Utils {
-                auth_secret: String::from(""),
-                storage_secret: String::from(""),
+                auth_secret: String::from("secret"),
+                storage_secret: String::from("secret"),
                 ips: vec![],
             },
             jsondb: jfs::Store::new_with_cfg(

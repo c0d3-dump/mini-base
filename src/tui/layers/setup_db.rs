@@ -1,6 +1,3 @@
-use std::thread;
-
-use axum_server::Handle;
 use cursive::view::{Nameable, Resizable, Scrollable};
 use cursive::views::ListView;
 use cursive::{
@@ -12,9 +9,8 @@ use enum_iterator::all;
 use crate::database;
 use crate::database::model::DbType;
 use crate::queries::model::Setup;
-use crate::server::start_server;
 use crate::tui::components;
-use crate::tui::utils::{get_current_model, get_current_mut_model, get_data_from_refname};
+use crate::tui::utils::{get_current_mut_model, get_data_from_refname};
 
 use super::dashboard;
 
@@ -55,23 +51,8 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
 
         let conn = database::Conn::new(dbtype.clone(), &dbpath);
 
-        let ips = get_data_from_refname::<EditView>(s, "ips")
-            .get_content()
-            .to_string();
-
-        let auth_secret = get_data_from_refname::<EditView>(s, "auth_secret")
-            .get_content()
-            .to_string();
-
-        let storage_secret = get_data_from_refname::<EditView>(s, "storage_secret")
-            .get_content()
-            .to_string();
-
         let setup = Setup {
             dbpath: dbpath.clone(),
-            ips: ips.clone(),
-            auth_secret: auth_secret.clone(),
-            storage_secret: storage_secret.clone(),
         };
 
         let model = get_current_mut_model(s);
@@ -89,16 +70,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
             None => {
                 let model = get_current_mut_model(s);
                 model.conn = Some(conn);
-                model.handle = Some(Handle::new());
-
-                model.utils.ips = ips.split(',').map(|ip| ip.to_string()).collect();
-                model.utils.auth_secret = auth_secret;
-                model.utils.storage_secret = storage_secret;
-
-                let model = get_current_model(s);
-                thread::spawn(|| {
-                    start_server(model);
-                });
 
                 s.pop_layer();
                 s.pop_layer();
@@ -118,9 +89,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
             log::error!("{:#?}", e);
             Setup {
                 dbpath: "".to_string(),
-                ips: "".to_string(),
-                auth_secret: "".to_string(),
-                storage_secret: "".to_string(),
             }
         }
     };
@@ -132,22 +100,6 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
         EditView::new()
             .content(setup_data.dbpath)
             .with_name("dbpath"),
-    );
-    list.add_child(
-        "IPs",
-        EditView::new().content(setup_data.ips).with_name("ips"),
-    );
-    list.add_child(
-        "Auth Secret",
-        EditView::new()
-            .content(setup_data.auth_secret)
-            .with_name("auth_secret"),
-    );
-    list.add_child(
-        "Storage Secret",
-        EditView::new()
-            .content(setup_data.storage_secret)
-            .with_name("storage_secret"),
     );
 
     s.add_layer(

@@ -14,9 +14,11 @@ use crate::tui::{
     utils::{self, get_current_mut_model},
 };
 
+pub mod apis;
+pub mod config;
+pub mod migration;
 pub mod query;
 pub mod role;
-pub mod server;
 pub mod users;
 
 pub fn display_dashboard(s: &mut Cursive) {
@@ -72,10 +74,12 @@ pub fn display_dashboard(s: &mut Cursive) {
 
     let mut dashboards = ScreensView::default();
 
-    dashboards.add_active_screen(role::role_dashboard(s));
+    dashboards.add_active_screen(config::config_dashboard(s));
+    dashboards.add_screen(role::role_dashboard(s));
     dashboards.add_screen(users::users_dashboard(s));
     dashboards.add_screen(query::query_dashboard(s));
-    dashboards.add_screen(server::server_dashboard(s));
+    dashboards.add_screen(apis::apis_dashboard(s));
+    dashboards.add_screen(migration::migration_dashboard(s));
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)
