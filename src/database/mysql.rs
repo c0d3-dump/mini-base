@@ -66,6 +66,14 @@ impl Mysql {
                             FOREIGN KEY (query_id) REFERENCES queries (id) ON DELETE CASCADE,
                             UNIQUE (role_id, query_id)
                         );
+                    
+                    CREATE TABLE IF NOT EXISTS
+                        migrations (
+                            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            name VARCHAR(255) UNIQUE NOT NULL,
+                            up_query TEXT DEFAULT '',
+                            down_query TEXT DEFAULT ''
+                        );
                     ";
 
                 let q = sqlx::query(query);

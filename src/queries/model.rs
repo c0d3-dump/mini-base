@@ -19,6 +19,7 @@ pub struct Temp {
     pub query_written: bool,
     pub query_access_update: bool,
     pub selected_role_access_id: Option<i64>,
+    pub restart_required: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -32,7 +33,21 @@ pub struct Role {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+pub struct Migration {
+    pub id: i64,
+    pub name: String,
+    pub up_query: String,
+    pub down_query: String,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct RoleName {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct MigrationName {
     pub id: i64,
     pub name: String,
 }

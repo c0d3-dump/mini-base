@@ -4,6 +4,7 @@ use jfs::{Config, Store};
 use crate::{database::Conn, server::utils::Utils};
 
 use self::model::{Offset, Temp};
+mod migration;
 pub mod model;
 mod query;
 mod role;
@@ -35,6 +36,7 @@ impl Model {
                 query_written: false,
                 query_access_update: false,
                 selected_role_access_id: None,
+                restart_required: false,
             },
             utils: Utils {
                 auth_secret: String::from("secret"),

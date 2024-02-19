@@ -1,13 +1,13 @@
 use cursive::{
     align::Align,
-    view::{Nameable, Resizable, Scrollable},
-    views::{Dialog, ListView, NamedView, ResizedView, TextView},
+    view::{Nameable, Scrollable},
+    views::{Dialog, ListView, NamedView, TextView},
     Cursive,
 };
 
 use crate::tui::{model::Sidebar, utils::get_current_mut_model};
 
-pub fn apis_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
+pub fn apis_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     let apis = ListView::new();
 
     let apis = update_apis(s, apis);
@@ -16,7 +16,6 @@ pub fn apis_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .title("Apis")
         .content(apis.with_name("server_apis").scrollable())
         .padding_lrtb(1, 1, 1, 0)
-        .full_screen()
         .with_name(Sidebar::Apis.to_string())
 }
 

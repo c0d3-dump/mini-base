@@ -29,13 +29,22 @@ pub mod utils;
 
 #[tokio::main]
 pub async fn start_server(model: Model) {
-    let origins: Vec<HeaderValue> = model
-        .utils
-        .ips
-        .clone()
-        .into_iter()
-        .map(|ip| ip.parse().unwrap())
-        .collect::<Vec<HeaderValue>>();
+    let mut cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    if model.utils.ips.len() > 0 {
+        let origins: Vec<HeaderValue> = model
+            .utils
+            .ips
+            .clone()
+            .into_iter()
+            .map(|ip| ip.parse().unwrap())
+            .collect::<Vec<HeaderValue>>();
+
+        cors = cors.allow_origin(origins);
+    }
 
     let app = Router::new()
         .route("/health", get(|| async { "Ok" }))
@@ -43,24 +52,16 @@ pub async fn start_server(model: Model) {
         .nest("/storage", storage::generate_storage_routes(model.clone()))
         .nest("/api", generate_routes(model.clone()))
         .layer(CookieManagerLayer::new())
-        .layer(
-            CorsLayer::new()
-                .allow_origin(origins)
-                .allow_methods(Any)
-                .allow_headers(Any),
-        );
+        .layer(cors);
 
     fn rewrite_request_uri<B>(mut req: Request<B>) -> Request<B> {
-        let inp = req.uri();
-        let tp = inp.path();
+        let base_uri = req.uri();
 
-        let rem = tp.replacen("/api/", "", 1);
-
+        let rem = base_uri.path().replacen("/api/", "", 1);
         let path = rem.replace('/', "_");
-
         let mut uri = format!("/api/{}", path);
 
-        if let Some(q) = inp.query() {
+        if let Some(q) = base_uri.query() {
             uri += "?";
             uri += q;
         }

@@ -1,6 +1,6 @@
 use cursive::{
-    view::{Nameable, Resizable},
-    views::{Dialog, EditView, NamedView, ResizedView, SelectView, TextView},
+    view::Nameable,
+    views::{Dialog, EditView, NamedView, SelectView, TextView},
     Cursive,
 };
 
@@ -13,7 +13,7 @@ use crate::tui::{
     utils::{get_current_mut_model, get_data_from_refname},
 };
 
-pub fn users_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
+pub fn users_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     let model = get_current_mut_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -45,7 +45,6 @@ pub fn users_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .content(user_list)
         .padding_lrtb(1, 1, 1, 0)
         .button("Add User", add_user)
-        .full_screen()
         .with_name(Sidebar::Users.to_string())
 }
 

@@ -1,9 +1,8 @@
 use cursive::{
     align::Align,
-    view::{Nameable, Resizable, Scrollable},
+    view::{Nameable, Scrollable},
     views::{
-        Button, Dialog, EditView, ListChild, ListView, NamedView, ResizedView, SelectView,
-        TextArea, TextView,
+        Button, Dialog, EditView, ListChild, ListView, NamedView, SelectView, TextArea, TextView,
     },
     Cursive,
 };
@@ -21,7 +20,7 @@ use crate::{
     },
 };
 
-pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
+pub fn query_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     let model = get_current_mut_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -53,7 +52,6 @@ pub fn query_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .content(query_list)
         .padding_lrtb(1, 1, 1, 0)
         .button("Add Query", add_query)
-        .full_screen()
         .with_name(Sidebar::Query.to_string())
 }
 
@@ -102,7 +100,12 @@ fn edit_query(s: &mut Cursive, idx: usize) {
                 },
             );
 
-            s.add_layer(exec_types);
+            s.add_layer(Dialog::new().content(exec_types.scrollable()).button(
+                "cancel",
+                |s: &mut Cursive| {
+                    s.pop_layer();
+                },
+            ));
 
             let button_label_ref = get_data_from_refname::<Button>(s, "exec_type_label");
             let btn_label = button_label_ref.label().replace(['<', '>'], "").to_string();
@@ -365,7 +368,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     s.add_layer(
         Dialog::new()
             .title("Edit Query")
-            .content(list)
+            .content(list.scrollable())
             .padding_lrtb(1, 1, 1, 0)
             .button("submit", on_submit)
             .button("delete", on_delete)

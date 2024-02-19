@@ -1,3 +1,6 @@
+use std::thread;
+
+use axum_server::Handle;
 use cursive::view::{Nameable, Resizable, Scrollable};
 use cursive::views::ListView;
 use cursive::{
@@ -9,8 +12,9 @@ use enum_iterator::all;
 use crate::database;
 use crate::database::model::DbType;
 use crate::queries::model::Setup;
+use crate::server::start_server;
 use crate::tui::components;
-use crate::tui::utils::{get_current_mut_model, get_data_from_refname};
+use crate::tui::utils::{get_current_model, get_current_mut_model, get_data_from_refname};
 
 use super::dashboard;
 
@@ -70,6 +74,12 @@ fn setup_db_connection(s: &mut Cursive, dbtype: DbType) {
             None => {
                 let model = get_current_mut_model(s);
                 model.conn = Some(conn);
+                model.handle = Some(Handle::new());
+
+                let model = get_current_model(s);
+                thread::spawn(|| {
+                    start_server(model);
+                });
 
                 s.pop_layer();
                 s.pop_layer();

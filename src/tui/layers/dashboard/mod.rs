@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use cursive::{
     direction::Orientation,
-    view::Nameable,
+    view::{Nameable, Resizable},
     views::{Dialog, LinearLayout, NamedView, ResizedView, ScreensView},
     Cursive,
 };
@@ -54,7 +54,7 @@ pub fn display_dashboard(s: &mut Cursive) {
                     s.quit();
                 } else {
                     let mut dashboards = utils::get_data_from_refname::<
-                        ScreensView<NamedView<ResizedView<Dialog>>>,
+                        ScreensView<ResizedView<NamedView<Dialog>>>,
                     >(s, "dashboards");
 
                     dashboards.set_active_screen(*idx);
@@ -74,12 +74,12 @@ pub fn display_dashboard(s: &mut Cursive) {
 
     let mut dashboards = ScreensView::default();
 
-    dashboards.add_active_screen(config::config_dashboard(s));
-    dashboards.add_screen(role::role_dashboard(s));
-    dashboards.add_screen(users::users_dashboard(s));
-    dashboards.add_screen(query::query_dashboard(s));
-    dashboards.add_screen(apis::apis_dashboard(s));
-    dashboards.add_screen(migration::migration_dashboard(s));
+    dashboards.add_active_screen(config::config_dashboard(s).full_screen());
+    dashboards.add_screen(role::role_dashboard(s).full_screen());
+    dashboards.add_screen(users::users_dashboard(s).full_screen());
+    dashboards.add_screen(query::query_dashboard(s).full_screen());
+    dashboards.add_screen(apis::apis_dashboard(s).full_screen());
+    dashboards.add_screen(migration::migration_dashboard(s).full_screen());
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)

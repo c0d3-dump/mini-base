@@ -1,9 +1,7 @@
 use cursive::{
     direction::Orientation,
-    view::{Nameable, Resizable},
-    views::{
-        Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, ResizedView, TextView,
-    },
+    view::Nameable,
+    views::{Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, TextView},
     Cursive, With,
 };
 
@@ -19,7 +17,7 @@ use crate::{
     },
 };
 
-pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
+pub fn role_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     let model = get_current_mut_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -48,7 +46,6 @@ pub fn role_dashboard(s: &mut Cursive) -> NamedView<ResizedView<Dialog>> {
         .content(role_list)
         .padding_lrtb(1, 1, 1, 0)
         .button("Add Role", add_role)
-        .full_screen()
         .with_name(Sidebar::Role.to_string())
 }
 
