@@ -8,8 +8,8 @@ pub enum Sidebar {
     Role,
     Users,
     Query,
-    Apis,
     Migration,
+    Apis,
     Quit,
 }
 
@@ -20,8 +20,8 @@ impl fmt::Display for Sidebar {
             Sidebar::Role => write!(f, "ROLE"),
             Sidebar::Users => write!(f, "USERS"),
             Sidebar::Query => write!(f, "QUERY"),
-            Sidebar::Apis => write!(f, "APIS"),
             Sidebar::Migration => write!(f, "MIGRATION"),
+            Sidebar::Apis => write!(f, "APIS"),
             Sidebar::Quit => write!(f, "QUIT"),
         }
     }

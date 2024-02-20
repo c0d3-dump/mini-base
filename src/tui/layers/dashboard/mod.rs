@@ -78,8 +78,8 @@ pub fn display_dashboard(s: &mut Cursive) {
     dashboards.add_screen(role::role_dashboard(s).full_screen());
     dashboards.add_screen(users::users_dashboard(s).full_screen());
     dashboards.add_screen(query::query_dashboard(s).full_screen());
-    dashboards.add_screen(apis::apis_dashboard(s).full_screen());
     dashboards.add_screen(migration::migration_dashboard(s).full_screen());
+    dashboards.add_screen(apis::apis_dashboard(s).full_screen());
 
     s.add_layer(
         LinearLayout::new(Orientation::Horizontal)

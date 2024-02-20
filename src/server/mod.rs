@@ -34,7 +34,7 @@ pub async fn start_server(model: Model) {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    if model.utils.ips.len() > 0 {
+    if !model.utils.ips.is_empty() {
         let origins: Vec<HeaderValue> = model
             .utils
             .ips

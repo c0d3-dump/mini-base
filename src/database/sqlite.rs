@@ -77,7 +77,8 @@ impl Sqlite {
                             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                             name VARCHAR(255) UNIQUE NOT NULL,
                             up_query TEXT DEFAULT '',
-                            down_query TEXT DEFAULT ''
+                            down_query TEXT DEFAULT '',
+                            executed TINYINT(1) DEFAULT 0
                         );
                     ";
 

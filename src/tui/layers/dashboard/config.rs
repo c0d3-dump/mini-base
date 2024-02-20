@@ -61,7 +61,7 @@ pub fn config_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
         .with_name(Sidebar::Config.to_string())
 }
 
-fn on_data_changes<'a, 'b>(s: &'a mut Cursive, _text: &'b str, _cursor: usize) {
+fn on_data_changes(s: &mut Cursive, _text: &str, _cursor: usize) {
     let model = get_current_mut_model(s);
     model.temp.restart_required = true;
 

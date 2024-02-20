@@ -56,6 +56,25 @@ pub fn add_select_item(s: &mut Cursive, refname: &str, item: String, idx: usize)
     selectview.add_item(item, idx);
 }
 
+pub fn get_select_item(s: &mut Cursive, refname: &str, idx: usize) -> String {
+    let selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
+
+    let binding = selectview
+        .iter()
+        .enumerate()
+        .filter(|(_, (_, val))| *val == &idx)
+        .map(|(i, _)| i)
+        .collect::<Vec<usize>>();
+
+    let temp_idx = binding.first();
+
+    if let Some(i) = temp_idx {
+        selectview.get_item(*i).unwrap().0.to_string()
+    } else {
+        "".to_string()
+    }
+}
+
 pub fn remove_select_item(s: &mut Cursive, refname: &str, idx: usize) -> Option<usize> {
     let mut selectview = s.find_name::<SelectView<usize>>(refname).unwrap();
 

@@ -37,6 +37,10 @@ impl Model {
                 query_access_update: false,
                 selected_role_access_id: None,
                 restart_required: false,
+                up_migration_string: "".to_string(),
+                down_migration_string: "".to_string(),
+                up_migration_written: false,
+                down_migration_written: false,
             },
             utils: Utils {
                 auth_secret: String::from("secret"),
