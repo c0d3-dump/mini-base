@@ -202,7 +202,7 @@ async fn generate_token(
                 TokenFile {
                     unique_name: s.unique_name,
                 },
-                exp_time,
+                if exp_time == -1 { 9999999999 } else { exp_time },
             );
             match optional_token {
                 Ok(token) => {
