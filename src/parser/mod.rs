@@ -8,6 +8,8 @@ use nom::{
     IResult,
 };
 
+pub mod sql_parser;
+
 fn parse_identifier(input: &str) -> IResult<&str, &str> {
     preceded(alt((peek(alpha1), peek(tag(".")))), take_until("}"))(input)
 }

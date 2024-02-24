@@ -1,7 +1,7 @@
 use axum_server::Handle;
 use jfs::{Config, Store};
 
-use crate::{database::Conn, server::utils::Utils};
+use crate::{database::Conn, parser::sql_parser::Trie, server::utils::Utils};
 
 use self::model::{Offset, Temp};
 mod migration;
@@ -19,6 +19,7 @@ pub struct Model {
     pub temp: Temp,
     pub utils: Utils,
     pub jsondb: Store,
+    pub trie: Trie,
 }
 
 impl Model {
@@ -41,6 +42,7 @@ impl Model {
                 down_migration_string: "".to_string(),
                 up_migration_written: false,
                 down_migration_written: false,
+                editor_popup_active: false,
             },
             utils: Utils {
                 auth_secret: String::from("secret"),
@@ -56,6 +58,7 @@ impl Model {
                 },
             )
             .unwrap(),
+            trie: Trie::new(),
         }
     }
 }

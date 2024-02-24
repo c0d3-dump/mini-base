@@ -184,7 +184,7 @@ fn edit_migration(s: &mut Cursive, idx: usize) {
             }
 
             let on_submit = move |s: &mut Cursive| {
-                let query_ref = get_data_from_refname::<TextArea>(s, "up_migration_editor");
+                let query_ref = get_data_from_refname::<TextArea>(s, "base_editor");
 
                 let model = get_current_mut_model(s);
                 model.temp.up_migration_string = query_ref.get_content().to_string();
@@ -193,7 +193,6 @@ fn edit_migration(s: &mut Cursive, idx: usize) {
             };
 
             s.add_layer(components::editor::editor_componant(
-                "up_migration_editor",
                 "Editor",
                 on_submit,
                 up_migration_string,
@@ -226,7 +225,7 @@ fn edit_migration(s: &mut Cursive, idx: usize) {
             }
 
             let on_submit = move |s: &mut Cursive| {
-                let query_ref = get_data_from_refname::<TextArea>(s, "down_migration_editor");
+                let query_ref = get_data_from_refname::<TextArea>(s, "base_editor");
 
                 let model = get_current_mut_model(s);
                 model.temp.down_migration_string = query_ref.get_content().to_string();
@@ -235,7 +234,6 @@ fn edit_migration(s: &mut Cursive, idx: usize) {
             };
 
             s.add_layer(components::editor::editor_componant(
-                "down_migration_editor",
                 "Editor",
                 on_submit,
                 down_migration_string,

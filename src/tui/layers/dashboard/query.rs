@@ -226,7 +226,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             }
 
             let on_submit = move |s: &mut Cursive| {
-                let query_ref = get_data_from_refname::<TextArea>(s, "query_editor");
+                let query_ref = get_data_from_refname::<TextArea>(s, "base_editor");
 
                 let model = get_current_mut_model(s);
                 model.temp.query_string = query_ref.get_content().to_string();
@@ -235,7 +235,6 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             };
 
             s.add_layer(components::editor::editor_componant(
-                "query_editor",
                 "Editor",
                 on_submit,
                 query_string,

@@ -24,6 +24,7 @@ pub struct Temp {
     pub down_migration_string: String,
     pub up_migration_written: bool,
     pub down_migration_written: bool,
+    pub editor_popup_active: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
