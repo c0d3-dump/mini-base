@@ -6,10 +6,11 @@ use enum_iterator::Sequence;
 pub enum Sidebar {
     Config,
     Role,
-    Users,
+    User,
     Query,
+    Webhook,
     Migration,
-    Apis,
+    Api,
     Quit,
 }
 
@@ -18,10 +19,11 @@ impl fmt::Display for Sidebar {
         match self {
             Sidebar::Config => write!(f, "CONFIG"),
             Sidebar::Role => write!(f, "ROLE"),
-            Sidebar::Users => write!(f, "USERS"),
+            Sidebar::User => write!(f, "USER"),
             Sidebar::Query => write!(f, "QUERY"),
+            Sidebar::Webhook => write!(f, "WEBHOOK"),
             Sidebar::Migration => write!(f, "MIGRATION"),
-            Sidebar::Apis => write!(f, "APIS"),
+            Sidebar::Api => write!(f, "API"),
             Sidebar::Quit => write!(f, "QUIT"),
         }
     }

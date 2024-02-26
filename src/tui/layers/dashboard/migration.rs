@@ -294,9 +294,7 @@ fn edit_migration(s: &mut Cursive, idx: usize) {
     let on_delete = move |s: &mut Cursive| {
         s.add_layer(
             Dialog::new()
-                .content(TextView::new(
-                    "Are you sure you want to remove remove migration?",
-                ))
+                .content(TextView::new("Are you sure you want to remove migration?"))
                 .button("cancel", |s: &mut Cursive| {
                     s.pop_layer();
                 })

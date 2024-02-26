@@ -1,15 +1,15 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 struct TrieNode {
-    children: HashMap<char, TrieNode>,
+    children: BTreeMap<char, TrieNode>,
     is_end: bool,
 }
 
 impl TrieNode {
     fn new() -> Self {
         TrieNode {
-            children: HashMap::new(),
+            children: BTreeMap::new(),
             is_end: false,
         }
     }
@@ -705,6 +705,11 @@ impl Trie {
         for word in keywords {
             self.insert(word);
         }
+
+        let predefined_keywords = vec!["${.USER_ID}", "${.USER_EMAIL}", "${.USER_ROLE}"];
+        for word in predefined_keywords {
+            self.insert(word);
+        }
     }
 
     fn insert(&mut self, word: &str) {
@@ -721,7 +726,7 @@ impl Trie {
             if let Some(next_node) = node.children.get(&char) {
                 node = next_node;
             } else {
-                return Vec::new(); // Return an empty vector if the prefix is not found
+                return Vec::new();
             }
         }
 
@@ -741,42 +746,6 @@ impl Trie {
             self.collect_words(next_node, next_prefix, result);
         }
     }
-
-    pub fn remove(&mut self, word: &str) {
-        if self.clone().remove_recursive(&mut self.root, word, 0) {
-            println!("Removed '{}'", word);
-        } else {
-            println!("{} not found in the trie", word);
-        }
-    }
-
-    fn remove_recursive(self, parent: &mut TrieNode, word: &str, index: usize) -> bool {
-        if index == word.len() {
-            if parent.is_end {
-                parent.is_end = false;
-                // Check if the parent node has no children, and if so, it can be pruned
-                if parent.children.is_empty() {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        let char = word.chars().nth(index).unwrap();
-
-        if let Some(mut next_node) = parent.children.remove(&char) {
-            if self.remove_recursive(&mut next_node, word, index + 1) {
-                // If the child node is marked for removal, do not re-insert it to the parent node
-                // Check if the parent node has no children and is not the end of a word, and if so, it can be pruned
-                return parent.children.is_empty() && !parent.is_end;
-            } else {
-                // If the child node is not marked for removal, re-insert it to the parent node
-                parent.children.insert(char, next_node);
-            }
-        }
-
-        false
-    }
 }
 
 #[cfg(test)]
@@ -787,7 +756,6 @@ mod tests {
     fn test1() {
         let mut trie = Trie::new();
         trie.fill_keywords();
-        trie.remove("SELECT");
 
         let res = trie.starts_with("se");
         dbg!(res);

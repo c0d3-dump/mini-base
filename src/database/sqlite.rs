@@ -67,7 +67,7 @@ impl Sqlite {
                         role_access (
                             role_id INTEGER NOT NULL,
                             query_id INTEGER NOT NULL,
-                            FOREIGN KEY (role_id) REFERENCES roles (id),
+                            FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE,
                             FOREIGN KEY (query_id) REFERENCES queries (id) ON DELETE CASCADE,
                             UNIQUE (role_id, query_id)
                         );
@@ -79,6 +79,24 @@ impl Sqlite {
                             up_query TEXT DEFAULT '',
                             down_query TEXT DEFAULT '',
                             executed TINYINT(1) DEFAULT 0
+                        );
+
+                    CREATE TABLE IF NOT EXISTS
+                        webhooks (
+                            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                            name VARCHAR(255) UNIQUE NOT NULL,
+                            exec_type VARCHAR(50) NOT NULL DEFAULT 'get' CHECK (exec_type IN ('get', 'post', 'delete', 'put')),
+                            url TEXT DEFAULT '',
+                            args JSON DEFAULT '{}'
+                        );
+                    
+                    CREATE TABLE IF NOT EXISTS
+                        webhook_query (
+                            webhook_id INTEGER NOT NULL,
+                            query_id INTEGER NOT NULL,
+                            FOREIGN KEY (webhook_id) REFERENCES webhooks (id) ON DELETE CASCADE,
+                            FOREIGN KEY (query_id) REFERENCES queries (id) ON DELETE CASCADE,
+                            UNIQUE (webhook_id, query_id)
                         );
                     ";
 
@@ -123,6 +141,7 @@ impl Sqlite {
                 ColType::Date(t) => q.bind(t),
                 ColType::Time(t) => q.bind(t),
                 ColType::Datetime(t) => q.bind(t),
+                ColType::Json(t) => q.bind(t),
                 _ => return Err("wrong type".to_string()),
             };
         }
@@ -150,6 +169,7 @@ impl Sqlite {
                 ColType::Date(t) => q.bind(t),
                 ColType::Time(t) => q.bind(t),
                 ColType::Datetime(t) => q.bind(t),
+                ColType::Json(t) => q.bind(t),
                 _ => return Err("wrong type".to_string()),
             };
         }
@@ -177,6 +197,7 @@ impl Sqlite {
                 ColType::Date(t) => q.bind(t),
                 ColType::Time(t) => q.bind(t),
                 ColType::Datetime(t) => q.bind(t),
+                ColType::Json(t) => q.bind(t),
                 _ => return Err("wrong type".to_string()),
             };
         }
@@ -261,6 +282,10 @@ impl Sqlite {
                     "TIME" => {
                         let t = row.get::<Option<NaiveTime>, _>(i);
                         ColType::Time(t)
+                    }
+                    "JSON" => {
+                        let t = row.get::<Option<String>, _>(i);
+                        ColType::Json(t)
                     }
                     _ => return Err("wrong type".to_string()),
                 };

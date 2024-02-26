@@ -1,10 +1,8 @@
 use core::fmt;
-use std::collections::HashMap;
 
 use chrono::{DateTime, Local, NaiveTime};
 use enum_iterator::Sequence;
 use serde::{Deserialize, Serialize};
-use sqlx::types::Json;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -17,7 +15,7 @@ pub enum ColType {
     Date(Option<DateTime<Local>>),
     Time(Option<NaiveTime>),
     Datetime(Option<DateTime<Local>>),
-    Json(Option<Json<HashMap<String, ColType>>>),
+    Json(Option<String>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -8,7 +8,7 @@ use cursive::{
 };
 
 use crate::{
-    queries::model::{Query, QueryAccess},
+    queries::model::{Query, QueryAccess, WebhookQuery},
     tui::{
         components::{
             self,
@@ -242,6 +242,77 @@ fn edit_query(s: &mut Cursive, idx: usize) {
         }),
     );
 
+    list.add_child(
+        "Webhook",
+        Button::new("", move |s: &mut Cursive| {
+            let model = get_current_mut_model(s);
+
+            if !model.temp.webhook_query_update {
+                let optional_webhook_query =
+                    futures::executor::block_on(model.get_webhook_query_by_id(idx as i64));
+
+                match optional_webhook_query {
+                    Ok(w) => {
+                        model.temp.webhook_query = w;
+                        model.temp.webhook_query_update = true;
+                    }
+                    Err(e) => {
+                        s.add_layer(Dialog::info(e));
+                        return;
+                    }
+                }
+            }
+
+            let check_box = components::checkbox_group::checkbox_group_component(
+                "webhook_list",
+                model
+                    .temp
+                    .webhook_query
+                    .iter()
+                    .map(|webhook| (webhook.name.clone(), webhook.is_connected))
+                    .collect(),
+            );
+
+            let on_submit = |s: &mut Cursive| {
+                let model = get_current_mut_model(s);
+
+                let items = model
+                    .temp
+                    .webhook_query
+                    .iter()
+                    .map(|w| w.name.clone())
+                    .collect();
+
+                let temp = get_checked_data(s, items);
+
+                let model = get_current_mut_model(s);
+
+                model.temp.webhook_query = model
+                    .temp
+                    .webhook_query
+                    .iter()
+                    .enumerate()
+                    .map(|(i, r)| WebhookQuery {
+                        id: r.id,
+                        name: r.name.clone(),
+                        is_connected: *temp.get(i).unwrap(),
+                    })
+                    .collect();
+
+                s.pop_layer();
+            };
+
+            s.add_layer(
+                Dialog::new()
+                    .content(check_box.scrollable())
+                    .button("submit", on_submit)
+                    .button("cancel", |s: &mut Cursive| {
+                        s.pop_layer();
+                    }),
+            );
+        }),
+    );
+
     let on_submit = move |s: &mut Cursive| {
         let label_ref = get_data_from_refname::<EditView>(s, "edit_query_label");
         let label = label_ref.get_content().to_string();
@@ -259,12 +330,9 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             exec_type: exec_type.clone(),
         }));
 
-        match res1 {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
-            }
+        if let Err(e) = res1 {
+            s.add_layer(Dialog::info(e));
+            return;
         }
 
         let query_access = model.temp.query_access.clone();
@@ -276,12 +344,9 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             let res2: Result<u64, String> =
                 futures::executor::block_on(model.edit_query_access(idx as i64, query_access));
 
-            match res2 {
-                Ok(_) => {}
-                Err(e) => {
-                    s.add_layer(Dialog::info(e));
-                    return;
-                }
+            if let Err(e) = res2 {
+                s.add_layer(Dialog::info(e));
+                return;
             }
         }
 
@@ -294,12 +359,24 @@ fn edit_query(s: &mut Cursive, idx: usize) {
             let res3: Result<u64, String> =
                 futures::executor::block_on(model.edit_query_string(idx as i64, query_string));
 
-            match res3 {
-                Ok(_) => {}
-                Err(e) => {
-                    s.add_layer(Dialog::info(e));
-                    return;
-                }
+            if let Err(e) = res3 {
+                s.add_layer(Dialog::info(e));
+                return;
+            }
+        }
+
+        let webhook_query = model.temp.webhook_query.clone();
+        model.temp.webhook_query.clear();
+
+        if model.temp.webhook_query_update {
+            model.temp.webhook_query_update = false;
+
+            let res4: Result<u64, String> =
+                futures::executor::block_on(model.edit_webhook_query(idx as i64, webhook_query));
+
+            if let Err(e) = res4 {
+                s.add_layer(Dialog::info(e));
+                return;
             }
         }
 
@@ -322,9 +399,7 @@ fn edit_query(s: &mut Cursive, idx: usize) {
     let on_delete = move |s: &mut Cursive| {
         s.add_layer(
             Dialog::new()
-                .content(TextView::new(
-                    "Are you sure you want to remove remove query?",
-                ))
+                .content(TextView::new("Are you sure you want to remove query?"))
                 .button("cancel", |s: &mut Cursive| {
                     s.pop_layer();
                 })

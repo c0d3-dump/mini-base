@@ -128,13 +128,10 @@ fn edit_role(s: &mut Cursive, idx: usize) {
         }
 
         let res = futures::executor::block_on(model.edit_role(role));
-        match res {
-            Ok(_) => {}
-            Err(e) => {
-                s.add_layer(Dialog::info(e));
-                return;
-            }
-        };
+        if let Err(e) = res {
+            s.add_layer(Dialog::info(e));
+            return;
+        }
 
         update_select_item(s, "role_list", label, idx);
         s.pop_layer();
@@ -143,9 +140,7 @@ fn edit_role(s: &mut Cursive, idx: usize) {
     let on_delete = move |s: &mut Cursive| {
         s.add_layer(
             Dialog::new()
-                .content(TextView::new(
-                    "Are you sure you want to remove remove role?",
-                ))
+                .content(TextView::new("Are you sure you want to remove role?"))
                 .button("cancel", |s: &mut Cursive| {
                     s.pop_layer();
                 })

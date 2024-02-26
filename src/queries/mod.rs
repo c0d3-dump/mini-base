@@ -10,6 +10,7 @@ mod query;
 mod role;
 mod storage;
 mod user;
+mod webhook;
 
 #[derive(Debug, Clone)]
 pub struct Model {
@@ -43,6 +44,8 @@ impl Model {
                 up_migration_written: false,
                 down_migration_written: false,
                 editor_popup_active: false,
+                webhook_query: vec![],
+                webhook_query_update: false,
             },
             utils: Utils {
                 auth_secret: String::from("secret"),

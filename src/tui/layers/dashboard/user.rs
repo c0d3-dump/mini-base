@@ -13,7 +13,7 @@ use crate::tui::{
     utils::{get_current_mut_model, get_data_from_refname},
 };
 
-pub fn users_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
+pub fn user_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     let model = get_current_mut_model(s);
 
     let on_select = |s: &mut Cursive, idx: &usize| {
@@ -41,11 +41,11 @@ pub fn users_dashboard(s: &mut Cursive) -> NamedView<Dialog> {
     );
 
     Dialog::new()
-        .title("Users")
+        .title("User")
         .content(user_list)
         .padding_lrtb(1, 1, 1, 0)
         .button("Add User", add_user)
-        .with_name(Sidebar::Users.to_string())
+        .with_name(Sidebar::User.to_string())
 }
 
 fn edit_user(s: &mut Cursive, idx: usize) {
@@ -106,9 +106,7 @@ fn edit_user(s: &mut Cursive, idx: usize) {
     let on_delete = move |s: &mut Cursive| {
         s.add_layer(
             Dialog::new()
-                .content(TextView::new(
-                    "Are you sure you want to remove remove user role?",
-                ))
+                .content(TextView::new("Are you sure you want to remove user role?"))
                 .button("cancel", |s: &mut Cursive| {
                     s.pop_layer();
                 })

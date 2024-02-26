@@ -25,6 +25,8 @@ pub struct Temp {
     pub up_migration_written: bool,
     pub down_migration_written: bool,
     pub editor_popup_active: bool,
+    pub webhook_query: Vec<WebhookQuery>,
+    pub webhook_query_update: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -38,17 +40,29 @@ pub struct Role {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
+pub struct RoleName {
+    pub id: i64,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct RoleAccess {
+    pub role_id: i64,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct UserRoleAccess {
+    pub role_id: i64,
+    pub name: String,
+    pub is_selected: bool,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Migration {
     pub id: i64,
     pub name: String,
     pub up_query: String,
     pub down_query: String,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow)]
-pub struct RoleName {
-    pub id: i64,
-    pub name: String,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -68,11 +82,6 @@ pub struct MigrationUp {
 pub struct MigrationDown {
     pub id: i64,
     pub down_query: String,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow)]
-pub struct DefaultRole {
-    pub role: Option<String>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
@@ -102,13 +111,6 @@ pub struct UserId {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
-pub struct Storage {
-    pub id: i64,
-    pub file_name: String,
-    pub unique_name: String,
-}
-
-#[derive(Debug, Clone, sqlx::FromRow)]
 pub struct Query {
     pub id: i64,
     pub name: String,
@@ -134,15 +136,37 @@ pub struct QueryString {
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
-pub struct RoleAccess {
-    pub role_id: i64,
+pub struct WebhookName {
+    pub id: i64,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
-pub struct UserRoleAccess {
-    pub role_id: i64,
+pub struct Webhook {
+    pub id: i64,
     pub name: String,
-    pub is_selected: bool,
+    pub exec_type: String,
+    pub url: String,
+    pub args: String,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct WebhookQuery {
+    pub id: i64,
+    pub name: String,
+    pub is_connected: bool,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct DefaultRole {
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct Storage {
+    pub id: i64,
+    pub file_name: String,
+    pub unique_name: String,
 }
 
 #[derive(Serialize, Deserialize)]

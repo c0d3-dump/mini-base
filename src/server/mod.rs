@@ -196,17 +196,17 @@ async fn handler(
                         match &optional_user {
                             Some(user) => {
                                 let map = HashMap::from([
-                                    (String::from(".userId"), ColType::Integer(Some(user.id))),
+                                    (String::from(".USER_ID"), ColType::Integer(Some(user.id))),
                                     (
-                                        String::from(".userEmail"),
+                                        String::from(".USER_EMAIL"),
                                         ColType::String(Some(user.email.clone())),
                                     ),
                                     (
-                                        String::from(".userRole"),
+                                        String::from(".USER_ROLE"),
                                         ColType::String(user.role.clone()),
                                     ),
                                 ]);
-                                map.get(&p).cloned()
+                                map.get(&p.to_uppercase()).cloned()
                             }
                             None => None,
                         }
@@ -223,9 +223,35 @@ async fn handler(
                 })
                 .collect::<Vec<ColType>>();
 
+            // TODO: make this before/after partition
+            // TODO: allow returning of value as error code or value as optional
+            let _ = run_webhook(model.clone(), query_id).await;
+
             run_query(model, parsed_query, args).await
         }
         Err(e) => (StatusCode::NOT_FOUND, e),
+    }
+}
+
+async fn run_webhook(model: Model, query_id: i64) -> Result<(), String> {
+    let optional_webhooks = model.get_all_webhook_query_by_query_id(query_id).await;
+
+    match optional_webhooks {
+        Ok(webhooks) => {
+            for webhook in webhooks {
+                let client = reqwest::Client::new();
+
+                let _ = match webhook.exec_type.as_str() {
+                    "get" => client.get(webhook.url).send().await,
+                    "post" => client.post(webhook.url).send().await,
+                    "put" => client.put(webhook.url).send().await,
+                    "delete" => client.delete(webhook.url).send().await,
+                    _ => return Err("invalid exec type".to_string()),
+                };
+            }
+            Ok(())
+        }
+        Err(e) => Err(e),
     }
 }
 

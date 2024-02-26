@@ -27,12 +27,20 @@ cargo run
 - [x] : some examples to play with
 - [x] : file upload support with role based access
 - [x] : screen to add cors access, auth/storage secrets
+- [x] : migrations(up/down) support
+- [x] : code suggestion in editor
+- [x] : web-hooks
+- [ ] : add more data-types support
+- [ ] : schedular
+- [ ] : custom code support? - still thinking if it's viable
 - [ ] : suggest new ideas
 
 ## Crates used for this project
 
-* sqlx - database
-* axum - web framework
-* cursive - tui library
-* jsonwebtoken - authentication
-* sha2 - password hashing
+- sqlx - database
+- axum - web framework
+- cursive - tui library
+- jsonwebtoken - authentication
+- sha2 - password hashing
+- nom - parsing
+- reqwest - http request

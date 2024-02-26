@@ -3,7 +3,7 @@ use std::cmp;
 use crate::database::model::ColType;
 
 use super::{
-    model::{Query, QueryAccess, QueryName, QueryString, RoleAccess},
+    model::{Query, QueryAccess, QueryName, QueryString, RoleAccess, WebhookQuery},
     Model,
 };
 
@@ -117,6 +117,25 @@ impl Model {
             .await
     }
 
+    pub async fn get_webhook_query_by_id(
+        &self,
+        query_id: i64,
+    ) -> Result<Vec<WebhookQuery>, String> {
+        let query = format!(
+            "SELECT id,
+             name, 
+             (SELECT TRUE FROM webhook_query WHERE webhook_id=webhooks.id AND query_id={}) AS is_connected 
+             FROM webhooks",
+            query_id
+        );
+
+        self.conn
+            .as_ref()
+            .unwrap()
+            .query_all_with_type::<WebhookQuery>(&query)
+            .await
+    }
+
     pub async fn edit_query_string(
         &self,
         query_id: i64,
@@ -181,6 +200,55 @@ impl Model {
 
         for q in deletable {
             let query = "DELETE FROM role_access WHERE role_id=? AND query_id=?";
+
+            let args = vec![ColType::Integer(Some(q)), ColType::Integer(Some(query_id))];
+            let res = self.conn.as_ref().unwrap().execute(query, args).await;
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+
+        Ok(1)
+    }
+
+    pub async fn edit_webhook_query(
+        &self,
+        query_id: i64,
+        query_access: Vec<WebhookQuery>,
+    ) -> Result<u64, String> {
+        let old_access = self.get_webhook_query_by_id(query_id).await.unwrap();
+
+        let (insertable, deletable) = remaining_ids(
+            old_access
+                .iter()
+                .filter(|q| q.is_connected)
+                .map(|q| q.id)
+                .collect(),
+            query_access
+                .iter()
+                .filter(|q| q.is_connected)
+                .map(|q| q.id)
+                .collect(),
+        );
+
+        for q in insertable {
+            let query = "INSERT INTO webhook_query(webhook_id, query_id) VALUES(?, ?)";
+
+            let args = vec![ColType::Integer(Some(q)), ColType::Integer(Some(query_id))];
+            let res = self.conn.as_ref().unwrap().execute(query, args).await;
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(e);
+                }
+            }
+        }
+
+        for q in deletable {
+            let query = "DELETE FROM webhook_query WHERE webhook_id=? AND query_id=?";
 
             let args = vec![ColType::Integer(Some(q)), ColType::Integer(Some(query_id))];
             let res = self.conn.as_ref().unwrap().execute(query, args).await;
