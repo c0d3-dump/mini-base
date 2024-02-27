@@ -7,8 +7,9 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Router, ServiceExt,
 };
+use reqwest::header::HeaderMap;
 use serde_json::{json, Value};
-use std::{collections::HashMap, net::SocketAddr};
+use std::{collections::HashMap, net::SocketAddr, str::FromStr};
 use tower::Layer;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::{Any, CorsLayer};
@@ -188,6 +189,8 @@ async fn handler(
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>();
 
+            let mut args_map = HashMap::new();
+
             let args = parsed_params
                 .clone()
                 .into_iter()
@@ -211,43 +214,98 @@ async fn handler(
                             None => None,
                         }
                     } else {
-                        data.get(&p).map(|p| match p.clone() {
+                        let d = data.get(&p).map(|p| match p.clone() {
                             Value::Bool(t) => ColType::Bool(Some(t)),
                             Value::Number(t) => ColType::Real(t.as_f64()),
                             Value::String(t) => ColType::String(Some(t)),
                             Value::Array(_) => todo!(),
                             Value::Object(_) => todo!(),
                             Value::Null => ColType::Bool(None),
-                        })
+                        });
+                        args_map.insert(p, d.clone());
+                        d
                     }
                 })
                 .collect::<Vec<ColType>>();
 
-            // TODO: make this before/after partition
-            // TODO: allow returning of value as error code or value as optional
-            let _ = run_webhook(model.clone(), query_id).await;
+            if let Some(user) = optional_user {
+                args_map.insert(
+                    ".USER_ID".to_string(),
+                    Some(ColType::Integer(Some(user.id))),
+                );
+                args_map.insert(
+                    ".USER_EMAIL".to_string(),
+                    Some(ColType::String(Some(user.email.clone()))),
+                );
+                args_map.insert(
+                    ".USER_ROLE".to_string(),
+                    Some(ColType::String(user.role.clone())),
+                );
+            }
 
-            run_query(model, parsed_query, args).await
+            // TODO: allow returning of value as error code or value as optional
+            let _ = run_webhook(model.clone(), args_map.clone(), query_id, "before").await;
+
+            // TODO: pass res of before webhook as args in query args
+            let res = run_query(model.clone(), parsed_query, args).await;
+
+            // TODO: might need to add some params from res in args_map and then pass
+            let _ = run_webhook(model.clone(), args_map, query_id, "after").await;
+
+            res
         }
         Err(e) => (StatusCode::NOT_FOUND, e),
     }
 }
 
-async fn run_webhook(model: Model, query_id: i64) -> Result<(), String> {
+// TODO: pass these args_map to header, query or body as variable defined in args of webhook
+async fn run_webhook(
+    model: Model,
+    args_map: HashMap<String, Option<ColType>>,
+    query_id: i64,
+    action_type: &str,
+) -> Result<(), String> {
     let optional_webhooks = model.get_all_webhook_query_by_query_id(query_id).await;
 
     match optional_webhooks {
         Ok(webhooks) => {
             for webhook in webhooks {
+                if webhook.action != action_type {
+                    continue;
+                }
+
                 let client = reqwest::Client::new();
 
-                let _ = match webhook.exec_type.as_str() {
-                    "get" => client.get(webhook.url).send().await,
-                    "post" => client.post(webhook.url).send().await,
-                    "put" => client.put(webhook.url).send().await,
-                    "delete" => client.delete(webhook.url).send().await,
+                let mut builder = match webhook.exec_type.as_str() {
+                    "get" => client.get(webhook.url),
+                    "post" => client.post(webhook.url),
+                    "put" => client.put(webhook.url),
+                    "delete" => client.delete(webhook.url),
                     _ => return Err("invalid exec type".to_string()),
                 };
+
+                let args: Value = serde_json::from_str(&webhook.args).unwrap_or(Value::default());
+                let header = &args["header"];
+                let query = &args["query"];
+                let body = &args["body"];
+
+                let mut headermap = HeaderMap::new();
+                if let Some(h) = header.as_object() {
+                    for (_, (k, v)) in h.iter().enumerate() {
+                        let key = reqwest::header::HeaderName::from_str(k);
+                        let val = reqwest::header::HeaderValue::from_str(v.as_str().unwrap_or(""));
+
+                        if let (Ok(k), Ok(v)) = (key, val) {
+                            headermap.insert(k, v);
+                        }
+                    }
+                }
+
+                builder = builder.headers(headermap);
+                builder = builder.query(query);
+                builder = builder.json(body);
+
+                let _ = builder.send().await;
             }
             Ok(())
         }

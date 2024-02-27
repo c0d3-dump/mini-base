@@ -169,6 +169,53 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
     );
 
     list.add_child(
+        "Action",
+        Button::new(webhook.action, |s: &mut Cursive| {
+            let items: Vec<(usize, String)> =
+                vec![(0, "before".to_string()), (1, "after".to_string())];
+
+            let action_type = select_component(
+                items.clone(),
+                "action_type",
+                move |s: &mut Cursive, idx: &usize| {
+                    let mut button_label_ref =
+                        get_data_from_refname::<Button>(s, "edit_webhook_action");
+
+                    let (_, selected_label) = items.get(*idx).unwrap();
+
+                    button_label_ref.set_label(selected_label);
+
+                    s.pop_layer();
+                },
+            );
+
+            s.add_layer(Dialog::new().content(action_type.scrollable()).button(
+                "cancel",
+                |s: &mut Cursive| {
+                    s.pop_layer();
+                },
+            ));
+
+            let button_label_ref = get_data_from_refname::<Button>(s, "edit_webhook_action");
+            let btn_label = button_label_ref.label().replace(['<', '>'], "").to_string();
+
+            let items: Vec<(usize, String)> =
+                vec![(0, "before".to_string()), (1, "after".to_string())];
+
+            let optional_i = items.iter().find(|(_, f)| *f == btn_label);
+            match optional_i {
+                Some((i, _)) => {
+                    let mut action_type_ref =
+                        get_data_from_refname::<SelectView<usize>>(s, "action_type");
+                    action_type_ref.set_selection(*i);
+                }
+                None => todo!(),
+            }
+        })
+        .with_name("edit_webhook_action"),
+    );
+
+    list.add_child(
         "Args",
         TextArea::new()
             .content(webhook.args.to_string())
@@ -186,6 +233,9 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
         let url_ref = get_data_from_refname::<EditView>(s, "edit_webhook_url");
         let url = url_ref.get_content().to_string();
 
+        let action_type_ref = get_data_from_refname::<Button>(s, "edit_webhook_action");
+        let action_type = action_type_ref.label().replace(['<', '>'], "").to_string();
+
         let args_ref = get_data_from_refname::<TextArea>(s, "edit_webhook_args");
         let args = args_ref.get_content().to_string();
 
@@ -194,7 +244,8 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
         let res = futures::executor::block_on(model.edit_webhook(Webhook {
             id: idx as i64,
             name: label.clone(),
-            exec_type: exec_type.clone(),
+            exec_type,
+            action: action_type,
             url,
             args,
         }));

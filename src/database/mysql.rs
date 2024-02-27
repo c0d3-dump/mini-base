@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use chrono::{DateTime, Local, NaiveTime};
 use sqlx::{
@@ -79,6 +79,7 @@ impl Mysql {
                             id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                             name VARCHAR(255) UNIQUE NOT NULL,
                             exec_type VARCHAR(50) NOT NULL DEFAULT 'get' CHECK (exec_type IN ('get', 'post', 'delete', 'put')),
+                            action VARCHAR(50) NOT NULL DEFAULT 'before' CHECK (action IN ('before', 'after')),
                             url TEXT DEFAULT '',
                             args JSON DEFAULT '{}'
                         );
@@ -240,11 +241,11 @@ impl Mysql {
         }
     }
 
-    pub fn parse_all(&self, rows: Vec<MySqlRow>) -> Result<Vec<HashMap<String, ColType>>, String> {
+    pub fn parse_all(&self, rows: Vec<MySqlRow>) -> Result<Vec<BTreeMap<String, ColType>>, String> {
         let mut table_data = vec![];
 
         for row in rows {
-            let mut map: HashMap<String, ColType> = HashMap::new();
+            let mut map: BTreeMap<String, ColType> = BTreeMap::new();
 
             for i in 0..row.len() {
                 let row_value = match row.column(i).type_info().name() {

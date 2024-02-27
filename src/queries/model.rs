@@ -146,6 +146,7 @@ pub struct Webhook {
     pub id: i64,
     pub name: String,
     pub exec_type: String,
+    pub action: String,
     pub url: String,
     pub args: String,
 }

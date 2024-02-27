@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use sqlx::{mysql::MySqlRow, sqlite::SqliteRow, Decode, Error, FromRow, Row, Type};
 
@@ -178,7 +178,7 @@ impl Conn {
         }
     }
 
-    pub fn parse_all(&self, rows: Vec<DbRow>) -> Result<Vec<HashMap<String, ColType>>, String> {
+    pub fn parse_all(&self, rows: Vec<DbRow>) -> Result<Vec<BTreeMap<String, ColType>>, String> {
         match self.dbtype {
             DbType::Sqlite => self
                 .sqlite
