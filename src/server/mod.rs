@@ -58,16 +58,18 @@ pub async fn start_server(model: Model) {
     fn rewrite_request_uri<B>(mut req: Request<B>) -> Request<B> {
         let base_uri = req.uri();
 
-        let rem = base_uri.path().replacen("/api/", "", 1);
-        let path = rem.replace('/', "_");
-        let mut uri = format!("/api/{}", path);
+        if base_uri.path().contains("/api/") {
+            let rem = base_uri.path().replacen("/api/", "", 1);
+            let path = rem.replace('/', "_");
+            let mut uri = format!("/api/{}", path);
 
-        if let Some(q) = base_uri.query() {
-            uri += "?";
-            uri += q;
+            if let Some(q) = base_uri.query() {
+                uri += "?";
+                uri += q;
+            }
+
+            *req.uri_mut() = uri.parse::<Uri>().unwrap();
         }
-
-        *req.uri_mut() = uri.parse::<Uri>().unwrap();
 
         req
     }
@@ -284,7 +286,12 @@ async fn run_webhook(
                     _ => return Err("invalid exec type".to_string()),
                 };
 
-                let args: Value = serde_json::from_str(&webhook.args).unwrap_or(Value::default());
+                let mut webhook_args = webhook.args.clone();
+                webhook_args =
+                    parser::replace_variables_with_values(&webhook_args, args_map.clone());
+
+                let args: Value = serde_json::from_str(&webhook_args).unwrap_or(Value::default());
+
                 let header = &args["header"];
                 let query = &args["query"];
                 let body = &args["body"];

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_until},
@@ -7,6 +9,8 @@ use nom::{
     sequence::{delimited, preceded},
     IResult,
 };
+
+use crate::database::model::ColType;
 
 pub mod sql_parser;
 
@@ -83,6 +87,37 @@ pub fn replace_variables_in_query(input: &str, variables: Vec<&str>) -> String {
         let from = format!("${{{var}}}");
 
         out = out.replace::<&str>(from.as_ref(), "?");
+    });
+    out
+}
+
+pub fn replace_variables_with_values(
+    input: &str,
+    values: HashMap<String, Option<ColType>>,
+) -> String {
+    let mut out = input.to_string();
+
+    values.into_iter().for_each(|(k, v)| {
+        let from = format!("${{{k}}}");
+
+        // dbg!(&from);
+
+        out = match v.unwrap() {
+            ColType::Integer(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Real(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::UnsignedInteger(t) => {
+                out.replace::<&str>(from.as_ref(), &t.unwrap().to_string())
+            }
+            ColType::String(t) => {
+                let nt = t.unwrap();
+                out.replace::<&str>(from.as_ref(), &format!("\"{nt}\""))
+            }
+            ColType::Bool(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Date(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Time(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Datetime(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Json(_) => out.clone(),
+        };
     });
     out
 }
