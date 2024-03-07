@@ -220,7 +220,8 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
         TextArea::new()
             .content(webhook.args.to_string())
             .with_name("edit_webhook_args")
-            .fixed_height(5),
+            .max_height(5)
+            .max_width(28),
     );
 
     let on_submit = move |s: &mut Cursive| {
