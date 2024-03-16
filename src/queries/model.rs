@@ -149,6 +149,7 @@ pub struct Webhook {
     pub action: String,
     pub url: String,
     pub args: String,
+    pub is_returned: bool,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

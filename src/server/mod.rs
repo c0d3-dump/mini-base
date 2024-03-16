@@ -216,14 +216,10 @@ async fn handler(
                             None => None,
                         }
                     } else {
-                        let d = data.get(&p).map(|p| match p.clone() {
-                            Value::Bool(t) => ColType::Bool(Some(t)),
-                            Value::Number(t) => ColType::Real(t.as_f64()),
-                            Value::String(t) => ColType::String(Some(t)),
-                            Value::Array(_) => todo!(),
-                            Value::Object(_) => todo!(),
-                            Value::Null => ColType::Bool(None),
-                        });
+                        let d = data
+                            .get(&p)
+                            .map(|p| ColType::get_col_type_from_value(p.clone()));
+
                         args_map.insert(p, d.clone());
                         d
                     }
@@ -245,14 +241,25 @@ async fn handler(
                 );
             }
 
-            // TODO: allow returning of value as error code or value as optional
-            let _ = run_webhook(model.clone(), args_map.clone(), query_id, "before").await;
+            let wb = run_webhook(model.clone(), args_map.clone(), query_id, "before").await;
+            if let Err(w) = wb {
+                return w;
+            }
 
-            // TODO: pass res of before webhook as args in query args
             let res = run_query(model.clone(), parsed_query, args).await;
+            if res.0 == StatusCode::BAD_REQUEST {
+                return (StatusCode::BAD_REQUEST, res.1);
+            }
 
-            // TODO: might need to add some params from res in args_map and then pass
-            let _ = run_webhook(model.clone(), args_map, query_id, "after").await;
+            let res_args = serde_json::from_str::<Value>(&res.1).unwrap();
+
+            let d = ColType::get_col_type_from_value(res_args);
+            args_map.insert("res".to_string(), Some(d));
+
+            let wa = run_webhook(model.clone(), args_map, query_id, "after").await;
+            if let Err(w) = wa {
+                return w;
+            }
 
             res
         }
@@ -260,17 +267,17 @@ async fn handler(
     }
 }
 
-// TODO: pass these args_map to header, query or body as variable defined in args of webhook
 async fn run_webhook(
     model: Model,
     args_map: HashMap<String, Option<ColType>>,
     query_id: i64,
     action_type: &str,
-) -> Result<(), String> {
+) -> Result<HashMap<String, Value>, (StatusCode, String)> {
     let optional_webhooks = model.get_all_webhook_query_by_query_id(query_id).await;
 
     match optional_webhooks {
         Ok(webhooks) => {
+            let res_map = HashMap::new();
             for webhook in webhooks {
                 if webhook.action != action_type {
                     continue;
@@ -283,7 +290,7 @@ async fn run_webhook(
                     "post" => client.post(webhook.url),
                     "put" => client.put(webhook.url),
                     "delete" => client.delete(webhook.url),
-                    _ => return Err("invalid exec type".to_string()),
+                    _ => return Err((StatusCode::BAD_REQUEST, "invalid type".to_string())),
                 };
 
                 let mut webhook_args = webhook.args.clone();
@@ -308,15 +315,40 @@ async fn run_webhook(
                     }
                 }
 
-                builder = builder.headers(headermap);
-                builder = builder.query(query);
-                builder = builder.json(body);
+                if !headermap.is_empty() {
+                    builder = builder.headers(headermap);
+                }
+                if !query.is_null() {
+                    builder = builder.query(query);
+                }
+                if !body.is_null() {
+                    builder = builder.json(body);
+                }
 
-                let _ = builder.send().await;
+                match builder.send().await {
+                    Ok(res) => {
+                        // TODO: might able to get data here and send it to res_map for use in query
+                        if webhook.is_returned {
+                            if let Err(e) = res.error_for_status() {
+                                let mut err_code = StatusCode::BAD_REQUEST;
+                                if let Some(s) = e.status() {
+                                    err_code = StatusCode::from_u16(s.as_u16())
+                                        .unwrap_or(StatusCode::BAD_REQUEST);
+                                }
+                                return Err((err_code, e.without_url().to_string()));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        if webhook.is_returned {
+                            return Err((StatusCode::BAD_REQUEST, e.to_string()));
+                        }
+                    }
+                }
             }
-            Ok(())
+            Ok(res_map)
         }
-        Err(e) => Err(e),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e)),
     }
 }
 
@@ -330,7 +362,10 @@ async fn run_query(
     match optional_rows {
         Ok(rows) => {
             let out = model.conn.as_ref().unwrap().parse_all(rows);
-            (StatusCode::OK, serde_json::to_string(&out).unwrap())
+            (
+                StatusCode::OK,
+                serde_json::to_string(&out.unwrap()).unwrap(),
+            )
         }
         Err(e) => (StatusCode::BAD_REQUEST, e),
     }

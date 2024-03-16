@@ -81,7 +81,8 @@ impl Mysql {
                             exec_type VARCHAR(50) NOT NULL DEFAULT 'get' CHECK (exec_type IN ('get', 'post', 'delete', 'put')),
                             action VARCHAR(50) NOT NULL DEFAULT 'before' CHECK (action IN ('before', 'after')),
                             url TEXT DEFAULT '',
-                            args JSON DEFAULT '{}'
+                            args JSON DEFAULT '{}',
+                            is_returned TINYINT(1) DEFAULT 0
                         );
                     
                     CREATE TABLE IF NOT EXISTS
@@ -137,6 +138,7 @@ impl Mysql {
                 ColType::Time(t) => q.bind(t),
                 ColType::Datetime(t) => q.bind(t),
                 ColType::Json(t) => q.bind(t),
+                _ => return Err("wrong type".to_string()),
             };
         }
 
@@ -165,6 +167,7 @@ impl Mysql {
                 ColType::Time(t) => q.bind(t),
                 ColType::Datetime(t) => q.bind(t),
                 ColType::Json(t) => q.bind(t),
+                _ => return Err("wrong type".to_string()),
             };
         }
 

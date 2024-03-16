@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_until},
+    bytes::complete::{tag, take, take_until},
     character::complete::{alpha1, alphanumeric1, digit1, multispace1},
     combinator::{peek, value},
     multi::{many0, many1},
@@ -97,12 +97,32 @@ pub fn replace_variables_with_values(
 ) -> String {
     let mut out = input.to_string();
 
-    values.into_iter().for_each(|(k, v)| {
-        let from = format!("${{{k}}}");
+    let binding = out.clone();
+    let variables = many0(take_variables)(&binding).unwrap().1;
 
-        // dbg!(&from);
+    for variable in variables {
+        let mut t_variable = variable;
+        if variable.contains("res.") {
+            t_variable = "res";
+        }
 
-        out = match v.unwrap() {
+        if let Some(var) = values.get(t_variable) {
+            out = replace_coltype_value(out, var.clone(), variable.split(".").collect(), variable);
+        }
+    }
+    out
+}
+
+fn replace_coltype_value(
+    out: String,
+    variable: Option<ColType>,
+    mut res_var: Vec<&str>,
+    original_var: &str,
+) -> String {
+    let from = format!("${{{original_var}}}");
+
+    match variable {
+        Some(var) => match var {
             ColType::Integer(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
             ColType::Real(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
             ColType::UnsignedInteger(t) => {
@@ -116,10 +136,60 @@ pub fn replace_variables_with_values(
             ColType::Date(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
             ColType::Time(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
             ColType::Datetime(t) => out.replace::<&str>(from.as_ref(), &t.unwrap().to_string()),
+            ColType::Array(t) => {
+                res_var.remove(0);
+                let rvf = res_var.first().unwrap();
+                if let Ok(i) = rvf.parse::<usize>() {
+                    let t = t.unwrap();
+                    let l = t.get(i).unwrap();
+
+                    replace_coltype_value(out, Some(l.clone()), res_var, original_var)
+                } else {
+                    "".to_string()
+                }
+            }
+            ColType::Object(t) => {
+                res_var.remove(0);
+                let rvf = res_var.first().unwrap();
+                let t = t.unwrap();
+                let l = t.get(*rvf).unwrap();
+
+                replace_coltype_value(out, Some(*l.clone()), res_var, original_var)
+            }
             ColType::Json(_) => out.clone(),
-        };
-    });
-    out
+        },
+        None => out,
+    }
+}
+
+#[test]
+fn test_replace_variables_with_values() {
+    let out = "
+        {  \"header\": {   \"test\": ${.USER_EMAIL},   \"res\": ${res.0.name}  },  \"body\": {   \"fname\": \"bhavin\",   \"lname\": \"sojitra\",   \"id\": ${.USER_ID},   \"role\": ${.USER_ROLE}  },  \"query\": {   \"ok\": \"there\",   \"roleId\": ${roleId}  } }
+    ";
+
+    let mut values = HashMap::new();
+    let mut d1 = HashMap::new();
+    d1.insert(
+        "name".to_string(),
+        Box::new(ColType::String(Some("bhavin sojitra".to_string()))),
+    );
+    let a1 = vec![ColType::Object(Some(d1))];
+
+    values.insert("res".to_string(), Some(ColType::Array(Some(a1))));
+    values.insert("roleId".to_string(), Some(ColType::Integer(Some(1))));
+
+    let res = replace_variables_with_values(out, values);
+
+    dbg!(res);
+}
+
+fn take_variables(input: &str) -> IResult<&str, &str> {
+    delimited(
+        preceded(take_until("${"), take(2usize)),
+        take_until("}"),
+        tag("}"),
+    )(input)
 }
 
 pub fn parse_type(input: &str) -> &str {

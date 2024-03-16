@@ -18,7 +18,7 @@ impl Model {
 
     pub async fn get_webhook_by_id(&self, webhook_id: i64) -> Result<Webhook, String> {
         let query = format!(
-            "SELECT id, name, exec_type, action, url, args FROM webhooks WHERE id={}",
+            "SELECT id, name, exec_type, action, url, args, is_returned FROM webhooks WHERE id={}",
             webhook_id
         );
 
@@ -42,7 +42,7 @@ impl Model {
     }
 
     pub async fn edit_webhook(&self, w: Webhook) -> Result<u64, String> {
-        let query = "UPDATE webhooks SET name=?, exec_type=?, action=?, url=?, args=? WHERE id=?";
+        let query = "UPDATE webhooks SET name=?, exec_type=?, action=?, url=?, args=?, is_returned=? WHERE id=?";
 
         let args = vec![
             ColType::String(Some(w.name)),
@@ -50,6 +50,7 @@ impl Model {
             ColType::String(Some(w.action)),
             ColType::String(Some(w.url)),
             ColType::Json(Some(w.args)),
+            ColType::Bool(Some(w.is_returned)),
             ColType::Integer(Some(w.id)),
         ];
 
@@ -68,7 +69,7 @@ impl Model {
         query_id: i64,
     ) -> Result<Vec<Webhook>, String> {
         let query = format!(
-            "SELECT id, name, exec_type, action, url, args FROM webhooks 
+            "SELECT id, name, exec_type, action, url, args, is_returned FROM webhooks 
             INNER JOIN webhook_query ON webhooks.id = webhook_id
             WHERE query_id={}",
             query_id

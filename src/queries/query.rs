@@ -141,8 +141,6 @@ impl Model {
         query_id: i64,
         query_string: String,
     ) -> Result<u64, String> {
-        dbg!(&query_string);
-
         let query = "UPDATE queries SET query=? WHERE id=?";
 
         let args = vec![

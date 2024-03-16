@@ -1,7 +1,11 @@
 use cursive::{
+    direction::Orientation,
     view::{Nameable, Resizable, Scrollable},
-    views::{Button, Dialog, EditView, ListView, NamedView, SelectView, TextArea, TextView},
-    Cursive,
+    views::{
+        Button, Dialog, EditView, LinearLayout, ListView, NamedView, RadioGroup, SelectView,
+        TextArea, TextView,
+    },
+    Cursive, With,
 };
 
 use crate::{
@@ -224,6 +228,20 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
             .max_width(28),
     );
 
+    let mut boolean_group: RadioGroup<bool> = RadioGroup::new();
+    list.add_child(
+        "Is Returned",
+        LinearLayout::new(Orientation::Horizontal)
+            .child(boolean_group.button(false, "False"))
+            .child(
+                boolean_group
+                    .button(true, "True")
+                    .with_if(webhook.is_returned, |b| {
+                        b.select();
+                    }),
+            ),
+    );
+
     let on_submit = move |s: &mut Cursive| {
         let label_ref = get_data_from_refname::<EditView>(s, "edit_webhook_label");
         let label = label_ref.get_content().to_string();
@@ -240,6 +258,8 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
         let args_ref = get_data_from_refname::<TextArea>(s, "edit_webhook_args");
         let args = args_ref.get_content().to_string();
 
+        let is_returned = *boolean_group.selection();
+
         let model = get_current_mut_model(s);
 
         let res = futures::executor::block_on(model.edit_webhook(Webhook {
@@ -249,6 +269,7 @@ fn edit_webhook(s: &mut Cursive, idx: usize) {
             action: action_type,
             url,
             args,
+            is_returned,
         }));
 
         if let Err(e) = res {
