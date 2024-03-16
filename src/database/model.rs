@@ -31,7 +31,7 @@ impl ColType {
             Value::String(t) => ColType::String(Some(t)),
             Value::Array(t) => ColType::Array(Some(
                 t.into_iter()
-                    .map(|v| Self::get_col_type_from_value(v))
+                    .map(Self::get_col_type_from_value)
                     .collect(),
             )),
             Value::Object(t) => {

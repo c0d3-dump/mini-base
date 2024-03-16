@@ -107,7 +107,7 @@ pub fn replace_variables_with_values(
         }
 
         if let Some(var) = values.get(t_variable) {
-            out = replace_coltype_value(out, var.clone(), variable.split(".").collect(), variable);
+            out = replace_coltype_value(out, var.clone(), variable.split('.').collect(), variable);
         }
     }
     out

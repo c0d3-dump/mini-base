@@ -305,7 +305,7 @@ async fn run_webhook(
 
                 let mut headermap = HeaderMap::new();
                 if let Some(h) = header.as_object() {
-                    for (_, (k, v)) in h.iter().enumerate() {
+                    for (k, v) in h.iter() {
                         let key = reqwest::header::HeaderName::from_str(k);
                         let val = reqwest::header::HeaderValue::from_str(v.as_str().unwrap_or(""));
 

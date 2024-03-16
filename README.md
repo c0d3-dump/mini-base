@@ -29,8 +29,8 @@ cargo run
 - [x] : screen to add cors access, auth/storage secrets
 - [x] : migrations(up/down) support
 - [x] : code suggestion in editor
-- [ ] : web-hooks (before/after query, returnable, pass value as arguments, use returned value in query) [WIP]
-- [ ] : add more data-types support
+- [x] : web-hooks (before/after query, returnable, pass value as arguments)
+- [x] : add more data-types support
 - [ ] : schedular
 - [ ] : custom code support? - still thinking if it's viable
 - [ ] : suggest new ideas
