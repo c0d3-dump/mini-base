@@ -11,6 +11,5 @@
 /target
 /logs
 test.db
-*.json
 /uploads
 secrets.json

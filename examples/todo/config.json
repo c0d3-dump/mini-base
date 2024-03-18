@@ -1,0 +1,10 @@
+{
+    "config": {
+        "auth_secret": "auth-secret",
+        "ips": "http://localhost:3000",
+        "storage_secret": "storage-secret"
+    },
+    "setup": {
+        "dbpath": "todos.db"
+    }
+}
