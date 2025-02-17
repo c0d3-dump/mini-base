@@ -31,8 +31,11 @@ cargo run
 - [x] : code suggestion in editor
 - [x] : web-hooks (before/after query, returnable, pass value as arguments)
 - [x] : add more data-types support
+- [ ] : seperate query with api routes so can test query before making api directly with db and also to make multiple query calls with single api
+- [ ] : s3 bucket or other storage solution (maybe move out of data passing through api layer like uploadthing)
 - [ ] : schedular
 - [ ] : custom code support? - still thinking if it's viable
+- [ ] : web ui? - still thinking if it's viable
 - [ ] : suggest new ideas
 
 ## Crates used for this project
