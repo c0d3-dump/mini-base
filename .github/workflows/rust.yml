@@ -30,7 +30,7 @@ jobs:
         run: cargo build --release
 
       - name: Upload a Build Artifact
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4
         with:
-          name: mini-base-linux-64
+          name: mini-base-linux-64-${{ matrix.runs-on }}
           path: ./target/release/mini-base
