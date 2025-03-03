@@ -2,6 +2,8 @@
 
 # mini-base
 
+notice: this is now getting migrated to the new version [minibase_v2](https://github.com/c0d3-dump/minibase_v2)
+
 ## minimal firebase alternative with tui, written in rust
 
 ![server](https://github.com/c0d3-dump/mini-base/assets/122201342/1a763234-fa1f-48cb-97a3-6b3f592c8199)
