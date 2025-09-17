@@ -1,5 +1,3 @@
-[![basebuild](https://github.com/c0d3-dump/mini-base/actions/workflows/rust.yml/badge.svg)](https://github.com/c0d3-dump/mini-base/actions/workflows/release.yml)
-
 # mini-base
 
 notice: this is now getting migrated to the new version [minibase_v2](https://github.com/c0d3-dump/minibase_v2)
